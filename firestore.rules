@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserRole() {
+      return (userExists() && 'role' in getUserData()) ? getUserData().role : '';
+    }
+
+    function getUserBatchId() {
+      return (userExists() && 'batchId' in getUserData()) ? getUserData().batchId : '';
+    }
+
+    function getUserFacultyId() {
+      return (userExists() && 'facultyId' in getUserData()) ? getUserData().facultyId : '';
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "agastya752@gmail.com" ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        getUserRole() == 'admin'
+      );
+    }
+
+    function isStudent() {
+      return isSignedIn() && getUserRole() == 'student';
+    }
+
+    function isTeacher() {
+      return isSignedIn() && getUserRole() == 'teacher';
+    }
+
+    // System health check & verified connection test records
+    match /system/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Admins registry
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // User profiles
+    match /users/{userId} {
+      // Users can read their own profile; admins can read any user profile
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      // Admins can list all users; teachers and students can query their own user doc
+      allow list: if isSignedIn() && (isAdmin() || request.auth.uid == userId);
+      // Create user: Users can register themselves as student, or admins can create any user
+      allow create: if isSignedIn() && (
+        (request.auth.uid == userId && (request.resource.data.role == 'student' || isAdmin())) ||
+        isAdmin()
+      );
+      // Update user: Users can update their own non-role fields, admins can update any
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'id']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Faculty members collection
+    match /faculty/{facultyId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Batches collection
+    match /batches/{batchId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Subjects collection
+    match /subjects/{subjectId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Rooms collection
+    match /rooms/{roomId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Faculty Availability
+    match /facultyAvailability/{availabilityId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && (
+        isAdmin() ||
+        (isTeacher() && getUserFacultyId() == request.resource.data.facultyId)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Timetable Entries
+    match /timetableEntries/{entryId} {
+      // Admin can read all
+      // Student can read entries corresponding to their batchId
+      // Teacher can read entries corresponding to their facultyId
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        (isStudent() && resource.data.batchId == getUserBatchId()) ||
+        (isTeacher() && resource.data.facultyId == getUserFacultyId())
+      );
+      
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        (isStudent() && resource.data.batchId == getUserBatchId()) ||
+        (isTeacher() && resource.data.facultyId == getUserFacultyId())
+      );
+
+      // Only administrators may change institutional timetable data
+      allow write: if isAdmin();
+    }
+  }
+}

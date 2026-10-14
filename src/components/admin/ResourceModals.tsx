@@ -1,0 +1,639 @@
+import React, { useState, useEffect } from 'react';
+import { Faculty, Batch, Subject, Room } from '../../types';
+import { X, Save } from 'lucide-react';
+
+/* =========================================================================
+   FACULTY MODAL
+   ========================================================================= */
+interface FacultyModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  facultyToEdit?: Faculty | null;
+  onSave: (faculty: Faculty) => Promise<void>;
+}
+
+export const FacultyModal: React.FC<FacultyModalProps> = ({
+  isOpen,
+  onClose,
+  facultyToEdit,
+  onSave
+}) => {
+  const [name, setName] = useState('');
+  const [department, setDepartment] = useState('Computer Science & AI');
+  const [email, setEmail] = useState('');
+  const [designation, setDesignation] = useState('Professor');
+  const [maxHoursPerWeek, setMaxHoursPerWeek] = useState(16);
+  const [color, setColor] = useState('#6366f1');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (facultyToEdit) {
+      setName(facultyToEdit.name);
+      setDepartment(facultyToEdit.department);
+      setEmail(facultyToEdit.email);
+      setDesignation(facultyToEdit.designation);
+      setMaxHoursPerWeek(facultyToEdit.maxHoursPerWeek);
+      setColor(facultyToEdit.color || '#6366f1');
+    } else {
+      setName('');
+      setDepartment('Computer Science & AI');
+      setEmail('');
+      setDesignation('Professor');
+      setMaxHoursPerWeek(16);
+      setColor('#6366f1');
+    }
+  }, [facultyToEdit, isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSave({
+        id: facultyToEdit?.id || `fac_${Date.now()}`,
+        name,
+        department,
+        email,
+        designation,
+        maxHoursPerWeek: Number(maxHoursPerWeek),
+        color
+      });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+          <h3 className="text-base font-bold text-white">
+            {facultyToEdit ? 'Edit Faculty Record' : 'Add New Faculty Member'}
+          </h3>
+          <button onClick={onClose} aria-label="Close modal" className="text-slate-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Full Name *</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Dr. Alan Turing"
+              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Department *</label>
+            <input
+              type="text"
+              required
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Designation</label>
+              <input
+                type="text"
+                value={designation}
+                onChange={(e) => setDesignation(e.target.value)}
+                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Max Hours/Week</label>
+              <input
+                type="number"
+                min="2"
+                max="40"
+                value={maxHoursPerWeek}
+                onChange={(e) => setMaxHoursPerWeek(Number(e.target.value))}
+                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Campus Email *</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="turing@campus.edu"
+              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Timetable Tag Color</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-9 h-9 rounded-lg border-0 bg-transparent cursor-pointer"
+              />
+              <span className="text-xs font-mono text-slate-400">{color}</span>
+            </div>
+          </div>
+          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/30"
+            >
+              {saving ? 'Saving...' : 'Save Faculty'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+/* =========================================================================
+   BATCH MODAL
+   ========================================================================= */
+interface BatchModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  batchToEdit?: Batch | null;
+  onSave: (batch: Batch) => Promise<void>;
+}
+
+export const BatchModal: React.FC<BatchModalProps> = ({
+  isOpen,
+  onClose,
+  batchToEdit,
+  onSave
+}) => {
+  const [name, setName] = useState('');
+  const [year, setYear] = useState('Year 3');
+  const [semester, setSemester] = useState('Semester 5');
+  const [studentCount, setStudentCount] = useState(45);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (batchToEdit) {
+      setName(batchToEdit.name);
+      setYear(batchToEdit.year);
+      setSemester(batchToEdit.semester);
+      setStudentCount(batchToEdit.studentCount);
+    } else {
+      setName('');
+      setYear('Year 3');
+      setSemester('Semester 5');
+      setStudentCount(45);
+    }
+  }, [batchToEdit, isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSave({
+        id: batchToEdit?.id || `batch_${Date.now()}`,
+        name,
+        year,
+        semester,
+        studentCount: Number(studentCount)
+      });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+          <h3 className="text-base font-bold text-white">
+            {batchToEdit ? 'Edit Student Batch' : 'Create Student Batch'}
+          </h3>
+          <button onClick={onClose} aria-label="Close modal" className="text-slate-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Batch Name *</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Computer Science - Year 3 (Batch A)"
+              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Academic Year</label>
+              <input
+                type="text"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                placeholder="Year 3"
+                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Semester</label>
+              <input
+                type="text"
+                value={semester}
+                onChange={(e) => setSemester(e.target.value)}
+                placeholder="Semester 5"
+                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Enrolled Student Count *</label>
+            <input
+              type="number"
+              min="1"
+              max="500"
+              required
+              value={studentCount}
+              onChange={(e) => setStudentCount(Number(e.target.value))}
+              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+            />
+            <p className="text-[10px] text-slate-500 mt-1">
+              Used by scheduler to guarantee classroom capacity constraints.
+            </p>
+          </div>
+          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/30"
+            >
+              {saving ? 'Saving...' : 'Save Batch'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+/* =========================================================================
+   SUBJECT MODAL
+   ========================================================================= */
+interface SubjectModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  subjectToEdit?: Subject | null;
+  batches: Batch[];
+  faculty: Faculty[];
+  onSave: (subject: Subject) => Promise<void>;
+}
+
+export const SubjectModal: React.FC<SubjectModalProps> = ({
+  isOpen,
+  onClose,
+  subjectToEdit,
+  batches,
+  faculty,
+  onSave
+}) => {
+  const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [credits, setCredits] = useState(4);
+  const [weeklyLectures, setWeeklyLectures] = useState(3);
+  const [isLab, setIsLab] = useState(false);
+  const [batchId, setBatchId] = useState('');
+  const [facultyId, setFacultyId] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (subjectToEdit) {
+      setCode(subjectToEdit.code);
+      setName(subjectToEdit.name);
+      setCredits(subjectToEdit.credits);
+      setWeeklyLectures(subjectToEdit.weeklyLectures);
+      setIsLab(subjectToEdit.isLab);
+      setBatchId(subjectToEdit.batchId);
+      setFacultyId(subjectToEdit.facultyId);
+    } else {
+      setCode('');
+      setName('');
+      setCredits(4);
+      setWeeklyLectures(3);
+      setIsLab(false);
+      setBatchId(batches[0]?.id || '');
+      setFacultyId(faculty[0]?.id || '');
+    }
+  }, [subjectToEdit, isOpen, batches, faculty]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSave({
+        id: subjectToEdit?.id || `sub_${Date.now()}`,
+        code,
+        name,
+        credits: Number(credits),
+        weeklyLectures: Number(weeklyLectures),
+        isLab,
+        batchId,
+        facultyId
+      });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+          <h3 className="text-base font-bold text-white">
+            {subjectToEdit ? 'Edit Curriculum Subject' : 'Add Curriculum Subject'}
+          </h3>
+          <button onClick={onClose} aria-label="Close modal" className="text-slate-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Code *</label>
+              <input
+                type="text"
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="CS301"
+                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500 font-mono"
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Course Title *</label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Operating Systems"
+                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Credits</label>
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={credits}
+                onChange={(e) => setCredits(Number(e.target.value))}
+                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Weekly Slots *</label>
+              <input
+                type="number"
+                min="1"
+                max="8"
+                required
+                value={weeklyLectures}
+                onChange={(e) => setWeeklyLectures(Number(e.target.value))}
+                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Target Batch *</label>
+            <select
+              value={batchId}
+              onChange={(e) => setBatchId(e.target.value)}
+              required
+              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+            >
+              {batches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Assigned Faculty *</label>
+            <select
+              value={facultyId}
+              onChange={(e) => setFacultyId(e.target.value)}
+              required
+              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+            >
+              {faculty.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name} ({f.department})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="pt-1">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isLab}
+                onChange={(e) => setIsLab(e.target.checked)}
+                className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-800 focus:ring-0"
+              />
+              <span className="text-xs text-slate-200 font-medium">
+                Requires Specialized Laboratory Facility (isLab = true)
+              </span>
+            </label>
+          </div>
+
+          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/30"
+            >
+              {saving ? 'Saving...' : 'Save Subject'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+/* =========================================================================
+   ROOM MODAL
+   ========================================================================= */
+interface RoomModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  roomToEdit?: Room | null;
+  onSave: (room: Room) => Promise<void>;
+}
+
+export const RoomModal: React.FC<RoomModalProps> = ({
+  isOpen,
+  onClose,
+  roomToEdit,
+  onSave
+}) => {
+  const [name, setName] = useState('');
+  const [building, setBuilding] = useState('Alan Turing Complex');
+  const [capacity, setCapacity] = useState(60);
+  const [isLab, setIsLab] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (roomToEdit) {
+      setName(roomToEdit.name);
+      setBuilding(roomToEdit.building);
+      setCapacity(roomToEdit.capacity);
+      setIsLab(roomToEdit.isLab);
+    } else {
+      setName('');
+      setBuilding('Alan Turing Complex');
+      setCapacity(60);
+      setIsLab(false);
+    }
+  }, [roomToEdit, isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSave({
+        id: roomToEdit?.id || `room_${Date.now()}`,
+        name,
+        building,
+        capacity: Number(capacity),
+        isLab
+      });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+          <h3 className="text-base font-bold text-white">
+            {roomToEdit ? 'Edit Campus Facility' : 'Add Campus Facility'}
+          </h3>
+          <button onClick={onClose} aria-label="Close modal" className="text-slate-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Room Designation *</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Turing Lecture Hall 301"
+              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Building / Wing</label>
+            <input
+              type="text"
+              value={building}
+              onChange={(e) => setBuilding(e.target.value)}
+              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Seating Capacity *</label>
+            <input
+              type="number"
+              min="1"
+              max="1000"
+              required
+              value={capacity}
+              onChange={(e) => setCapacity(Number(e.target.value))}
+              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div className="pt-1">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isLab}
+                onChange={(e) => setIsLab(e.target.checked)}
+                className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-800 focus:ring-0"
+              />
+              <span className="text-xs text-slate-200 font-medium">
+                Equipped as Laboratory (Computers / Apparatus)
+              </span>
+            </label>
+          </div>
+          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/30"
+            >
+              {saving ? 'Saving...' : 'Save Room'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
