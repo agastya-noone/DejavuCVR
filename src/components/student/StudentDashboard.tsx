@@ -10,8 +10,11 @@ import {
   Layers,
   Sparkles,
   Info,
-  CalendarDays
+  CalendarDays,
+  Printer,
+  Download
 } from 'lucide-react';
+import { PrintExportModal } from '../common/PrintExportModal';
 
 interface StudentDashboardProps {
   entries: TimetableEntry[];
@@ -32,6 +35,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   const [selectedDay, setSelectedDay] = useState<DayOfWeek | 'ALL'>('ALL');
   const [sessionFilter, setSessionFilter] = useState<'ALL' | 'lecture' | 'lab'>('ALL');
   const [viewMode, setViewMode] = useState<'grid' | 'agenda'>('grid');
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   const activeBatch = batches.find((b) => b.id === currentBatchId) || batches[0];
 
@@ -88,23 +92,34 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             </p>
           </div>
 
-          {/* Batch Selector */}
-          {batches.length > 0 && onSelectBatch && (
-            <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
-              <span className="text-xs text-slate-600 pl-1 font-medium">Cohort:</span>
-              <select
-                value={currentBatchId}
-                onChange={(e) => onSelectBatch(e.target.value)}
-                className="bg-white text-xs text-slate-900 font-semibold px-2.5 py-1.5 rounded-md border border-slate-300 focus:outline-none focus:border-blue-600 shadow-xs"
-              >
-                {batches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name} ({b.studentCount} students)
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Actions: Batch Selector & Print Button */}
+          <div className="flex flex-wrap items-center gap-2">
+            {batches.length > 0 && onSelectBatch && (
+              <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+                <span className="text-xs text-slate-600 pl-1 font-medium">Cohort:</span>
+                <select
+                  value={currentBatchId}
+                  onChange={(e) => onSelectBatch(e.target.value)}
+                  className="bg-white text-xs text-slate-900 font-semibold px-2.5 py-1.5 rounded-md border border-slate-300 focus:outline-none focus:border-blue-600 shadow-xs"
+                >
+                  {batches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({b.studentCount} students)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <button
+              onClick={() => setIsPrintModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer no-print"
+              title="Print official timetable or export spreadsheet/calendar"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print / Export</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -266,6 +281,15 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               List
             </button>
           </div>
+
+          <button
+            onClick={() => setIsPrintModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold shadow-xs transition-all cursor-pointer no-print"
+            title="Print or download schedule"
+          >
+            <Printer className="w-3.5 h-3.5 text-slate-600" />
+            <span>Print</span>
+          </button>
         </div>
       </div>
 
@@ -363,6 +387,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           })}
         </div>
       )}
+
+      {/* Print & Export Modal */}
+      <PrintExportModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        entries={batchEntries}
+        title={activeBatch ? activeBatch.name : 'Cohort Timetable'}
+        subtitle={`${activeBatch?.year || ''} • ${activeBatch?.semester || ''} • Enrollment: ${activeBatch?.studentCount || 0} students`}
+        facultyList={faculty}
+        userRole="student"
+      />
     </div>
   );
 };

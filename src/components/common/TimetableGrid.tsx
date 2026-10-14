@@ -42,6 +42,24 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   return (
     <div className="w-full overflow-x-auto pb-4">
       <div className="min-w-[840px] rounded-xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+        {/* Official Header for Direct Page Print */}
+        <div className="hidden print:block p-4 border-b border-slate-300 bg-slate-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-tight">
+                SYNCHRONIQ Academic Management System • Official Timetable
+              </h2>
+              <p className="text-[10px] text-slate-600">
+                Weekly Academic Schedule ({entries.length} Sessions)
+              </p>
+            </div>
+            <div className="text-right text-[10px] text-slate-500">
+              <p>Generated: {new Date().toLocaleDateString()}</p>
+              <p className="font-semibold text-slate-800">Academic Year 2026–2027</p>
+            </div>
+          </div>
+        </div>
+
         {/* Table Header: Days of the week */}
         <div className="grid grid-cols-6 border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700">
           <div className="p-3 text-center border-r border-slate-200 uppercase tracking-wider text-slate-500 flex items-center justify-center gap-1.5">
@@ -111,7 +129,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                           </span>
 
                           {isAdmin && (
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 print:hidden">
                               {onEditEntry && (
                                 <button
                                   onClick={(e) => {
@@ -157,7 +175,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                               <span className="truncate">{entry.roomName}</span>
                             </span>
                             <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 shrink-0 font-medium">
-                              {entry.batchName.replace('Computer Science - Year 3 ', '')}
+                              {entry.batchName.replace('[Demo] ', '').replace('Computer Science - Year 3 ', '')}
                             </span>
                           </div>
                         </div>

@@ -39,8 +39,19 @@ export interface Subject {
   weeklyLectures: number;
   isLab: boolean;
   batchId: string;
-  facultyId: string;
+  facultyId?: string; // Primary / legacy assigned faculty member
+  facultyIds?: string[]; // Multiple qualified/assigned faculty members eligible to teach this subject
   createdAt?: string;
+}
+
+/**
+ * Returns all eligible faculty IDs for a subject (supports both facultyIds array and legacy facultyId).
+ */
+export function getSubjectFacultyIds(subject: Subject): string[] {
+  if (Array.isArray(subject.facultyIds) && subject.facultyIds.length > 0) {
+    return subject.facultyIds;
+  }
+  return subject.facultyId ? [subject.facultyId] : [];
 }
 
 export interface Room {

@@ -16,7 +16,8 @@ import {
   getSubjects,
   getRooms,
   getTimetableEntries,
-  getFacultyAvailability
+  getFacultyAvailability,
+  saveTimetableEntry
 } from './lib/timetableService';
 import {
   Batch,
@@ -26,7 +27,8 @@ import {
   Subject,
   TimetableEntry
 } from './types';
-import { Calendar, Loader2 } from 'lucide-react';
+import { Calendar, Loader2, Sparkles } from 'lucide-react';
+import { CampusSolveAIAssistant } from './components/common/CampusSolveAIAssistant';
 
 import {
   DEMO_FICTIONAL_BATCHES,
@@ -48,11 +50,24 @@ function DashboardRouter() {
   const [availabilities, setAvailabilities] = useState<FacultyAvailability[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isAIOpen, setIsAIOpen] = useState(false);
 
   // Student active batch selection
   const [studentBatchId, setStudentBatchId] = useState<string>('batch_demo_alpha');
   // Teacher active faculty selection
   const [teacherFacultyId, setTeacherFacultyId] = useState<string>('fac_demo_vance');
+
+  // Handle applying AI-generated automated schedule
+  const handleApplyAISchedule = async (newEntries: TimetableEntry[]) => {
+    setEntries(newEntries);
+    if (currentUser && !demoModeActive && role === 'admin') {
+      try {
+        await Promise.all(newEntries.map((e) => saveTimetableEntry(e)));
+      } catch (err) {
+        console.error('Error persisting AI schedule entries to Firestore:', err);
+      }
+    }
+  };
 
   // Load dataset from Firestore (or in-memory demo if evaluator is using preview mode without auth)
   const loadData = useCallback(async (isRefresh = false) => {
@@ -166,7 +181,12 @@ function DashboardRouter() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
-      <Navbar onRefreshData={() => loadData(true)} isRefreshing={isRefreshing} />
+      <Navbar
+        onRefreshData={() => loadData(true)}
+        isRefreshing={isRefreshing}
+        onToggleAIAssistant={() => setIsAIOpen((prev) => !prev)}
+        isAIOpen={isAIOpen}
+      />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
         {dataLoading ? (
@@ -211,8 +231,57 @@ function DashboardRouter() {
         )}
       </main>
 
+      {/* Floating CampusSolve AI Trigger Button */}
+      {!isAIOpen && (
+        <button
+          onClick={() => setIsAIOpen(true)}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-slate-900 hover:bg-blue-600 text-white shadow-xl hover:shadow-2xl transition-all duration-200 cursor-pointer border border-slate-700/50 hover:border-blue-400 group no-print"
+          title="Open CampusSolve Intelligent AI Assistant"
+        >
+          <div className="w-6 h-6 rounded-full bg-blue-500/20 group-hover:bg-white/20 flex items-center justify-center transition-colors">
+            <Sparkles className="w-3.5 h-3.5 text-blue-400 group-hover:text-white animate-pulse" />
+          </div>
+          <div className="text-left">
+            <div className="text-xs font-bold tracking-tight leading-none flex items-center gap-1.5">
+              <span>CampusSolve AI</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            </div>
+            <span className="text-[10px] text-slate-300 group-hover:text-blue-100 font-medium">
+              {role === 'admin'
+                ? 'Scheduling Co-Pilot'
+                : role === 'teacher'
+                ? 'Faculty Assistant'
+                : 'Student Guide'}
+            </span>
+          </div>
+        </button>
+      )}
+
+      {/* CampusSolve Intelligent AI Assistant Drawer */}
+      <CampusSolveAIAssistant
+        isOpen={isAIOpen}
+        onClose={() => setIsAIOpen(false)}
+        role={role || 'student'}
+        userInfo={{
+          id: userProfile?.id || currentUser?.uid || 'user_demo',
+          email: userProfile?.email || currentUser?.email || 'user@campus.edu',
+          displayName: userProfile?.displayName || currentUser?.displayName || 'Campus Member',
+          batchId: role === 'student' ? studentBatchId : undefined,
+          facultyId: role === 'teacher' ? teacherFacultyId : undefined
+        }}
+        dataset={{
+          entries,
+          faculty,
+          batches,
+          rooms,
+          subjects,
+          availabilities
+        }}
+        onApplyGeneratedSchedule={handleApplyAISchedule}
+      />
+
       {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
+      <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500 no-print">
         SYNCHRONIQ • Academic Timetable Management System
       </footer>
     </div>

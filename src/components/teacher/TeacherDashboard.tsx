@@ -18,9 +18,11 @@ import {
   Sparkles,
   Sliders,
   Save,
-  Check
+  Check,
+  Printer
 } from 'lucide-react';
 import { saveFacultyAvailability } from '../../lib/timetableService';
+import { PrintExportModal } from '../common/PrintExportModal';
 
 interface TeacherDashboardProps {
   entries: TimetableEntry[];
@@ -42,6 +44,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const [activeTab, setActiveTab] = useState<'schedule' | 'availability'>('schedule');
   const [savingAvailability, setSavingAvailability] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   // Active faculty record
   const currentFaculty =
@@ -182,23 +185,34 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </p>
           </div>
 
-          {/* Faculty Selector */}
-          {facultyList.length > 0 && onSelectFaculty && (
-            <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
-              <span className="text-xs text-slate-600 pl-1 font-medium">Instructor:</span>
-              <select
-                value={currentFacultyId}
-                onChange={(e) => onSelectFaculty(e.target.value)}
-                className="bg-white text-xs text-slate-900 font-semibold px-2.5 py-1.5 rounded-md border border-slate-300 focus:outline-none focus:border-blue-600 shadow-xs"
-              >
-                {facultyList.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name} ({f.department})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Actions: Faculty Selector & Print Button */}
+          <div className="flex flex-wrap items-center gap-2">
+            {facultyList.length > 0 && onSelectFaculty && (
+              <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+                <span className="text-xs text-slate-600 pl-1 font-medium">Instructor:</span>
+                <select
+                  value={currentFacultyId}
+                  onChange={(e) => onSelectFaculty(e.target.value)}
+                  className="bg-white text-xs text-slate-900 font-semibold px-2.5 py-1.5 rounded-md border border-slate-300 focus:outline-none focus:border-blue-600 shadow-xs"
+                >
+                  {facultyList.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name} ({f.department})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <button
+              onClick={() => setIsPrintModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer no-print"
+              title="Print official teaching schedule or export spreadsheet/calendar"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Schedule</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -283,29 +297,40 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-slate-200 pb-2">
+      {/* Tabs & Quick Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-2">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setActiveTab('schedule')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === 'schedule'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            Teaching Timetable
+          </button>
+          <button
+            onClick={() => setActiveTab('availability')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === 'availability'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            Office Hours & Availability
+          </button>
+        </div>
+
         <button
-          onClick={() => setActiveTab('schedule')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'schedule'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
+          onClick={() => setIsPrintModalOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-300 shadow-xs transition-all cursor-pointer no-print self-start sm:self-center"
+          title="Print official teaching schedule or export spreadsheet/calendar"
         >
-          <Calendar className="w-3.5 h-3.5" />
-          Teaching Timetable
-        </button>
-        <button
-          onClick={() => setActiveTab('availability')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'availability'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
-        >
-          <Sliders className="w-3.5 h-3.5" />
-          Office Hours & Availability
+          <Printer className="w-3.5 h-3.5 text-slate-700" />
+          <span>Print / Export Timetable</span>
         </button>
       </div>
 
@@ -438,6 +463,17 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Print & Export Modal */}
+      <PrintExportModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        entries={facultyEntries}
+        title={currentFaculty ? currentFaculty.name : 'Faculty Teaching Schedule'}
+        subtitle={`${currentFaculty?.department || 'Department'} • ${currentFaculty?.designation || 'Instructor'} • Target Teaching Hours: ${currentFaculty?.maxHoursPerWeek || 16} hrs/week`}
+        facultyList={facultyList}
+        userRole="teacher"
+      />
     </div>
   );
 };

@@ -7,16 +7,24 @@ import {
   Shield,
   GraduationCap,
   WifiOff,
-  RefreshCw
+  RefreshCw,
+  Sparkles
 } from 'lucide-react';
 import { UserRole } from '../types';
 
 interface NavbarProps {
   onRefreshData?: () => void;
   isRefreshing?: boolean;
+  onToggleAIAssistant?: () => void;
+  isAIOpen?: boolean;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onRefreshData, isRefreshing }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  onRefreshData,
+  isRefreshing,
+  onToggleAIAssistant,
+  isAIOpen
+}) => {
   const { currentUser, userProfile, role, logout, setDemoPersona, demoModeActive, isFirebaseConnected } = useAuth();
 
   const getRoleBadge = (r: UserRole | null) => {
@@ -47,7 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onRefreshData, isRefreshing }) =
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white shadow-xs px-4 sm:px-6 py-3">
+    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white shadow-xs px-4 sm:px-6 py-3 no-print">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Brand */}
         <div className="flex items-center gap-3">
@@ -116,8 +124,24 @@ export const Navbar: React.FC<NavbarProps> = ({ onRefreshData, isRefreshing }) =
           </button>
         </div>
 
-        {/* Right Section: Status, Profile & Sign Out */}
-        <div className="flex items-center gap-2.5">
+        {/* Right Section: AI Assistant, Status, Profile & Sign Out */}
+        <div className="flex items-center gap-2">
+          {onToggleAIAssistant && (
+            <button
+              onClick={onToggleAIAssistant}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer border ${
+                isAIOpen
+                  ? 'bg-blue-600 text-white border-blue-700 shadow-sm'
+                  : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300'
+              }`}
+              title="Open CampusSolve Intelligent AI Assistant"
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${isAIOpen ? 'text-white' : 'text-blue-600'}`} />
+              <span className="hidden sm:inline">CampusSolve AI</span>
+              <span className="sm:hidden">AI</span>
+            </button>
+          )}
+
           {onRefreshData && (
             <button
               onClick={onRefreshData}

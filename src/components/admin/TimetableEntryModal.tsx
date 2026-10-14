@@ -9,7 +9,8 @@ import {
   DayOfWeek,
   DAYS_OF_WEEK,
   TIME_SLOTS,
-  TimetableConflict
+  TimetableConflict,
+  getSubjectFacultyIds
 } from '../../types';
 import { validateEntry } from '../../lib/scheduler';
 import { X, AlertTriangle, CheckCircle2, Save, AlertCircle } from 'lucide-react';
@@ -78,12 +79,21 @@ export const TimetableEntryModal: React.FC<TimetableEntryModalProps> = ({
     }
   }, [entryToEdit, isOpen, subjects, batches, rooms, faculty]);
 
+  // Active subject and eligible faculty
+  const currentSubject = subjects.find((s) => s.id === subjectId);
+  const eligibleFacultyIds = currentSubject ? getSubjectFacultyIds(currentSubject) : [];
+
   // When subject changes, auto-select associated faculty, batch, and session type
   const handleSubjectChange = (id: string) => {
     setSubjectId(id);
     const sub = subjects.find((s) => s.id === id);
     if (sub) {
-      if (sub.facultyId) setFacultyId(sub.facultyId);
+      const fids = getSubjectFacultyIds(sub);
+      if (fids.length > 0 && !fids.includes(facultyId)) {
+        setFacultyId(fids[0]);
+      } else if (sub.facultyId && !fids.includes(facultyId)) {
+        setFacultyId(sub.facultyId);
+      }
       if (sub.batchId) setBatchId(sub.batchId);
       setSessionType(sub.isLab ? 'lab' : 'lecture');
 
@@ -234,20 +244,30 @@ export const TimetableEntryModal: React.FC<TimetableEntryModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Faculty Instructor *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Faculty Instructor *
+                </label>
+                {eligibleFacultyIds.length > 1 && (
+                  <span className="text-[10px] text-blue-700 font-medium">
+                    {eligibleFacultyIds.length} qualified
+                  </span>
+                )}
+              </div>
               <select
                 value={facultyId}
                 onChange={(e) => setFacultyId(e.target.value)}
                 required
                 className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
               >
-                {faculty.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name} ({f.department})
-                  </option>
-                ))}
+                {faculty.map((f) => {
+                  const isEligible = eligibleFacultyIds.includes(f.id);
+                  return (
+                    <option key={f.id} value={f.id}>
+                      {isEligible ? '★ ' : ''}{f.name} ({f.department}){isEligible ? ' — Qualified' : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>

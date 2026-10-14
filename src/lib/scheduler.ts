@@ -10,7 +10,8 @@ import {
   ScheduleGenerationResult,
   DAYS_OF_WEEK,
   TIME_SLOTS,
-  DayOfWeek
+  DayOfWeek,
+  getSubjectFacultyIds
 } from '../types';
 
 /**
@@ -255,7 +256,8 @@ export function generateAutomatedSchedule(
 
   for (const subject of sortedSubjects) {
     const batch = batches.find((b) => b.id === subject.batchId);
-    const facultyMember = faculty.find((f) => f.id === subject.facultyId);
+    const eligibleFacultyIds = getSubjectFacultyIds(subject);
+    const eligibleFaculty = faculty.filter((f) => eligibleFacultyIds.includes(f.id));
 
     if (!batch) {
       unallocatedSubjects.push({
@@ -266,12 +268,12 @@ export function generateAutomatedSchedule(
       continue;
     }
 
-    if (!facultyMember) {
+    if (eligibleFaculty.length === 0) {
       unallocatedSubjects.push({
         subject,
-        reason: `Assigned faculty (ID: ${subject.facultyId}) not found in database.`
+        reason: `Assigned faculty (ID: ${eligibleFacultyIds.join(', ') || 'none'}) not found in database.`
       });
-      logs.push(`[Error] Subject "${subject.name}" failed: Faculty record missing.`);
+      logs.push(`[Error] Subject "${subject.name}" failed: No eligible faculty available.`);
       continue;
     }
 
@@ -329,32 +331,6 @@ export function generateAutomatedSchedule(
 
           const slotLabel = slot.label;
 
-          // Check faculty availability
-          const facultyDayAvail = availabilities.find(
-            (a) => a.facultyId === facultyMember.id && a.day === day
-          );
-          if (facultyDayAvail) {
-            if (facultyDayAvail.unavailableSlots?.includes(slotLabel)) {
-              continue; // skip slot marked unavailable
-            }
-            if (
-              facultyDayAvail.availableSlots &&
-              facultyDayAvail.availableSlots.length > 0 &&
-              !facultyDayAvail.availableSlots.includes(slotLabel)
-            ) {
-              continue;
-            }
-          }
-
-          // Check if faculty already booked in another class in this slot
-          const facultyBusy = scheduledEntries.some(
-            (e) =>
-              e.facultyId === facultyMember.id &&
-              e.day === day &&
-              isOverlapping(slot.start, slot.end, e.startTime, e.endTime)
-          );
-          if (facultyBusy) continue;
-
           // Check if batch already booked in another class in this slot
           const batchBusy = scheduledEntries.some(
             (e) =>
@@ -364,42 +340,79 @@ export function generateAutomatedSchedule(
           );
           if (batchBusy) continue;
 
-          // Find an unoccupied compatible room
-          for (const room of compatibleRooms) {
-            const roomBusy = scheduledEntries.some(
+          // Sort eligible faculty candidates by current teaching assignments to distribute workload evenly
+          const facultyCandidates = [...eligibleFaculty].sort((f1, f2) => {
+            const count1 = scheduledEntries.filter((e) => e.facultyId === f1.id).length;
+            const count2 = scheduledEntries.filter((e) => e.facultyId === f2.id).length;
+            return count1 - count2;
+          });
+
+          for (const facultyMember of facultyCandidates) {
+            if (allocatedThisSession) break;
+
+            // Check faculty availability
+            const facultyDayAvail = availabilities.find(
+              (a) => a.facultyId === facultyMember.id && a.day === day
+            );
+            if (facultyDayAvail) {
+              if (facultyDayAvail.unavailableSlots?.includes(slotLabel)) {
+                continue; // skip slot marked unavailable
+              }
+              if (
+                facultyDayAvail.availableSlots &&
+                facultyDayAvail.availableSlots.length > 0 &&
+                !facultyDayAvail.availableSlots.includes(slotLabel)
+              ) {
+                continue;
+              }
+            }
+
+            // Check if faculty already booked in another class in this slot
+            const facultyBusy = scheduledEntries.some(
               (e) =>
-                e.roomId === room.id &&
+                e.facultyId === facultyMember.id &&
                 e.day === day &&
                 isOverlapping(slot.start, slot.end, e.startTime, e.endTime)
             );
-            if (roomBusy) continue;
+            if (facultyBusy) continue;
 
-            // Found valid slot and room!
-            const newEntry: TimetableEntry = {
-              id: `sched_${subject.id}_${day}_${slot.start.replace(':', '')}`,
-              subjectId: subject.id,
-              subjectName: subject.name,
-              batchId: batch.id,
-              batchName: batch.name,
-              facultyId: facultyMember.id,
-              facultyName: facultyMember.name,
-              roomId: room.id,
-              roomName: room.name,
-              day,
-              startTime: slot.start,
-              endTime: slot.end,
-              sessionType: subject.isLab ? 'lab' : 'lecture',
-              createdAt: new Date().toISOString()
-            };
+            // Find an unoccupied compatible room
+            for (const room of compatibleRooms) {
+              const roomBusy = scheduledEntries.some(
+                (e) =>
+                  e.roomId === room.id &&
+                  e.day === day &&
+                  isOverlapping(slot.start, slot.end, e.startTime, e.endTime)
+              );
+              if (roomBusy) continue;
 
-            scheduledEntries.push(newEntry);
-            subjectDayCount[subject.id][day] = (subjectDayCount[subject.id][day] || 0) + 1;
-            scheduledForThisSubject++;
-            allocatedThisSession = true;
-            logs.push(
-              `[Allocated] ${subject.name} (${subject.isLab ? 'Lab' : 'Lec'}) -> ${day} ${slot.start}-${slot.end} in ${room.name} (${facultyMember.name})`
-            );
-            break;
+              // Found valid slot, eligible faculty member, and room!
+              const newEntry: TimetableEntry = {
+                id: `sched_${subject.id}_${day}_${slot.start.replace(':', '')}`,
+                subjectId: subject.id,
+                subjectName: subject.name,
+                batchId: batch.id,
+                batchName: batch.name,
+                facultyId: facultyMember.id,
+                facultyName: facultyMember.name,
+                roomId: room.id,
+                roomName: room.name,
+                day,
+                startTime: slot.start,
+                endTime: slot.end,
+                sessionType: subject.isLab ? 'lab' : 'lecture',
+                createdAt: new Date().toISOString()
+              };
+
+              scheduledEntries.push(newEntry);
+              subjectDayCount[subject.id][day] = (subjectDayCount[subject.id][day] || 0) + 1;
+              scheduledForThisSubject++;
+              allocatedThisSession = true;
+              logs.push(
+                `[Allocated] ${subject.name} (${subject.isLab ? 'Lab' : 'Lec'}) -> ${day} ${slot.start}-${slot.end} in ${room.name} (${facultyMember.name})`
+              );
+              break;
+            }
           }
         }
       }

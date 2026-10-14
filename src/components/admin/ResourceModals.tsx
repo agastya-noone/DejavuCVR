@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Faculty, Batch, Subject, Room } from '../../types';
+import { Faculty, Batch, Subject, Room, getSubjectFacultyIds } from '../../types';
 import { X, Save } from 'lucide-react';
 
 /* =========================================================================
@@ -336,6 +336,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
   const [weeklyLectures, setWeeklyLectures] = useState(3);
   const [isLab, setIsLab] = useState(false);
   const [batchId, setBatchId] = useState('');
+  const [facultyIds, setFacultyIds] = useState<string[]>([]);
   const [facultyId, setFacultyId] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -347,7 +348,9 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
       setWeeklyLectures(subjectToEdit.weeklyLectures);
       setIsLab(subjectToEdit.isLab);
       setBatchId(subjectToEdit.batchId);
-      setFacultyId(subjectToEdit.facultyId);
+      const fids = getSubjectFacultyIds(subjectToEdit);
+      setFacultyIds(fids);
+      setFacultyId(fids[0] || subjectToEdit.facultyId || faculty[0]?.id || '');
     } else {
       setCode('');
       setName('');
@@ -355,9 +358,27 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
       setWeeklyLectures(3);
       setIsLab(false);
       setBatchId(batches[0]?.id || '');
-      setFacultyId(faculty[0]?.id || '');
+      const defaultFid = faculty[0]?.id || '';
+      setFacultyIds(defaultFid ? [defaultFid] : []);
+      setFacultyId(defaultFid);
     }
   }, [subjectToEdit, isOpen, batches, faculty]);
+
+  const handleToggleFaculty = (id: string) => {
+    setFacultyIds((prev) => {
+      let updated: string[];
+      if (prev.includes(id)) {
+        if (prev.length <= 1) return prev; // keep at least one
+        updated = prev.filter((item) => item !== id);
+      } else {
+        updated = [...prev, id];
+      }
+      if (!updated.includes(facultyId) && updated.length > 0) {
+        setFacultyId(updated[0]);
+      }
+      return updated;
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -373,7 +394,8 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
         weeklyLectures: Number(weeklyLectures),
         isLab,
         batchId,
-        facultyId
+        facultyId: facultyId || facultyIds[0] || '',
+        facultyIds: facultyIds.length > 0 ? facultyIds : (facultyId ? [facultyId] : [])
       });
       onClose();
     } finally {
@@ -465,20 +487,58 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Assigned Faculty *</label>
-            <select
-              value={facultyId}
-              onChange={(e) => setFacultyId(e.target.value)}
-              required
-              className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
-            >
-              {faculty.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name} ({f.department})
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-700">
+                Qualified Faculty ({facultyIds.length} eligible) *
+              </label>
+              <span className="text-[10px] text-slate-500">Multiple faculty eligible</span>
+            </div>
+            <div className="max-h-36 overflow-y-auto rounded-lg border border-slate-300 p-1.5 space-y-1 bg-white shadow-xs">
+              {faculty.map((f) => {
+                const checked = facultyIds.includes(f.id);
+                return (
+                  <label
+                    key={f.id}
+                    className={`flex items-center justify-between p-1.5 rounded-md text-xs cursor-pointer transition-colors ${
+                      checked ? 'bg-blue-50 text-blue-900 font-medium' : 'hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => handleToggleFaculty(f.id)}
+                        className="w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-0 cursor-pointer"
+                      />
+                      <span>{f.name}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500">{f.department}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
+
+          {facultyIds.length > 1 && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Primary Course Coordinator
+              </label>
+              <select
+                value={facultyId}
+                onChange={(e) => setFacultyId(e.target.value)}
+                className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
+              >
+                {faculty
+                  .filter((f) => facultyIds.includes(f.id))
+                  .map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name} ({f.department})
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
 
           <div className="pt-1">
             <label className="flex items-center gap-2 cursor-pointer">

@@ -13,6 +13,7 @@ import { AutomatedSchedulerModal } from './AutomatedSchedulerModal';
 import { TimetableEntryModal } from './TimetableEntryModal';
 import { FacultyModal, BatchModal, SubjectModal, RoomModal } from './ResourceModals';
 import { DemoDataReportModal } from './DemoDataReportModal';
+import { PrintExportModal } from '../common/PrintExportModal';
 import { ConflictMap } from './ConflictMap';
 import { validateFullSchedule } from '../../lib/scheduler';
 import { loadFictionalDemoData, LoadDemoDataResult } from '../../lib/demoData';
@@ -95,6 +96,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [roomToEdit, setRoomToEdit] = useState<Room | null>(null);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   // Demo seeding action feedback & audit report
   const [seeding, setSeeding] = useState(false);
@@ -121,6 +123,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
     return entries;
   }, [entries, gridFilterType, selectedFilterId]);
+
+  // Dynamic document title for print/export
+  const printTitle = useMemo(() => {
+    if (gridFilterType === 'batch' && selectedFilterId !== 'ALL') {
+      const b = batches.find((item) => item.id === selectedFilterId);
+      return b ? b.name : 'Cohort Timetable';
+    }
+    if (gridFilterType === 'faculty' && selectedFilterId !== 'ALL') {
+      const f = faculty.find((item) => item.id === selectedFilterId);
+      return f ? `Faculty Schedule: ${f.name}` : 'Faculty Timetable';
+    }
+    if (gridFilterType === 'room' && selectedFilterId !== 'ALL') {
+      const r = rooms.find((item) => item.id === selectedFilterId);
+      return r ? `Facility Schedule: ${r.name}` : 'Facility Timetable';
+    }
+    return 'Institutional Master Timetable';
+  }, [gridFilterType, selectedFilterId, batches, faculty, rooms]);
+
+  const printSubtitle = useMemo(() => {
+    if (selectedFilterId === 'ALL') {
+      return `Master institutional timetable spanning ${batches.length} cohorts, ${faculty.length} faculty, and ${rooms.length} facilities`;
+    }
+    return `Filtered by ${gridFilterType.toUpperCase()} • ${displayedEntries.length} scheduled sessions`;
+  }, [selectedFilterId, gridFilterType, batches.length, faculty.length, rooms.length, displayedEntries.length]);
 
   // Handle Loading Synthetic Demo Data (Protects existing records by default)
   const handleLoadDemoData = async () => {
@@ -151,39 +177,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Export Timetable to CSV
+  // Export & Print actions
   const handleExportCSV = () => {
-    if (entries.length === 0) {
-      alert('No timetable entries to export.');
-      return;
-    }
-
-    const headers = ['Day', 'Start Time', 'End Time', 'Subject', 'Session Type', 'Batch', 'Faculty', 'Room'];
-    const rows = entries.map((e) => [
-      `"${e.day}"`,
-      `"${e.startTime}"`,
-      `"${e.endTime}"`,
-      `"${e.subjectName.replace(/"/g, '""')}"`,
-      `"${e.sessionType}"`,
-      `"${e.batchName.replace(/"/g, '""')}"`,
-      `"${e.facultyName.replace(/"/g, '""')}"`,
-      `"${e.roomName.replace(/"/g, '""')}"`
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `synchroniq_timetable_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setIsPrintModalOpen(true);
   };
 
-  // Print view
   const handlePrint = () => {
-    window.print();
+    setIsPrintModalOpen(true);
   };
 
   return (
@@ -509,6 +509,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <span className="text-xs text-slate-500 font-mono">
                 {displayedEntries.length} entries shown
               </span>
+
+              <button
+                onClick={() => setIsPrintModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer no-print ml-2"
+                title="Print or export current timetable view"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print / Export</span>
+              </button>
             </div>
           </div>
 
@@ -702,7 +711,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="divide-y divide-slate-100">
             {subjects.map((s) => {
               const b = batches.find((item) => item.id === s.batchId);
-              const f = faculty.find((item) => item.id === s.facultyId);
+              const fids = s.facultyIds && s.facultyIds.length > 0 ? s.facultyIds : (s.facultyId ? [s.facultyId] : []);
+              const assignedFacultyNames = fids.map((id) => faculty.find((item) => item.id === id)?.name || id).join(', ') || 'Unassigned';
               return (
                 <div key={s.id} className="py-3 flex items-center justify-between gap-4">
                   <div>
@@ -718,7 +728,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       )}
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
-                      {s.credits} Credits • {s.weeklyLectures} sessions/wk • Batch: {b?.name || s.batchId} • Faculty: {f?.name || s.facultyId}
+                      {s.credits} Credits • {s.weeklyLectures} sessions/wk • Batch: {b?.name || s.batchId} • <span className="font-medium text-slate-700">Faculty:</span> {assignedFacultyNames}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -994,6 +1004,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         result={demoReport}
         onForceReload={handleForceReloadDemoData}
         isReloading={isForceReloading}
+      />
+
+      {/* Official Print & Export Modal */}
+      <PrintExportModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        entries={displayedEntries}
+        title={printTitle}
+        subtitle={printSubtitle}
+        facultyList={faculty}
+        roomsList={rooms}
+        userRole="admin"
       />
     </div>
   );
