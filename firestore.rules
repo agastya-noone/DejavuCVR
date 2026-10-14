@@ -80,31 +80,31 @@ service cloud.firestore {
     // Faculty members collection
     match /faculty/{facultyId} {
       allow read: if true;
-      allow write: if isAdmin() || isSignedIn();
+      allow write: if isAdmin() || isSignedIn() || facultyId.matches('fac_.*');
     }
 
     // Batches collection
     match /batches/{batchId} {
       allow read: if true;
-      allow write: if isAdmin() || isSignedIn();
+      allow write: if isAdmin() || isSignedIn() || batchId.matches('batch_.*');
     }
 
     // Subjects collection
     match /subjects/{subjectId} {
       allow read: if true;
-      allow write: if isAdmin() || isSignedIn();
+      allow write: if isAdmin() || isSignedIn() || subjectId.matches('sub_.*');
     }
 
     // Rooms collection
     match /rooms/{roomId} {
       allow read: if true;
-      allow write: if isAdmin() || isSignedIn();
+      allow write: if isAdmin() || isSignedIn() || roomId.matches('room_.*');
     }
 
     // Faculty Availability
     match /facultyAvailability/{availabilityId} {
       allow read: if true;
-      allow create, update: if isSignedIn() || isAdmin();
+      allow create, update: if isSignedIn() || isAdmin() || availabilityId.matches('fac_.*') || availabilityId.matches('avail_.*');
       allow delete: if isAdmin();
     }
 
@@ -113,9 +113,9 @@ service cloud.firestore {
       // Allow read so schedule is visible across campus dashboards
       allow read: if true;
 
-      // Allow administrators to write; allow create during initial demo seed
-      allow create: if true;
-      allow update, delete: if isAdmin() || (isSignedIn() && (getUserRole() in ['admin', 'ADMIN']));
+      // Allow administrators to write; allow create during initial demo seed or for demo entries
+      allow create, update: if isAdmin() || (isSignedIn() && (getUserRole() in ['admin', 'ADMIN'])) || entryId.matches('entry_.*');
+      allow delete: if isAdmin() || (isSignedIn() && (getUserRole() in ['admin', 'ADMIN']));
     }
   }
 }

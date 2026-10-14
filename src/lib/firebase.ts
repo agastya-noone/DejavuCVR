@@ -1,13 +1,26 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer, setDoc } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+import defaultConfig from '../../firebase-applet-config.json';
+
+// Support custom environment variables if provided, otherwise use the auto-provisioned AI Studio config
+export const firebaseConfig = {
+  apiKey: (import.meta.env?.VITE_FIREBASE_API_KEY as string) || defaultConfig.apiKey,
+  authDomain: (import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN as string) || defaultConfig.authDomain,
+  projectId: (import.meta.env?.VITE_FIREBASE_PROJECT_ID as string) || defaultConfig.projectId,
+  storageBucket: (import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET as string) || defaultConfig.storageBucket,
+  messagingSenderId: (import.meta.env?.VITE_FIREBASE_MESSAGING_SENDER_ID as string) || defaultConfig.messagingSenderId,
+  appId: (import.meta.env?.VITE_FIREBASE_APP_ID as string) || defaultConfig.appId,
+  firestoreDatabaseId: (import.meta.env?.VITE_FIREBASE_DATABASE_ID as string) || defaultConfig.firestoreDatabaseId,
+};
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 // Firestore database ID must be passed to getFirestore as specified in config
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
+  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+  : getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
 export enum OperationType {
