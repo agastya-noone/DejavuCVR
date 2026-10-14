@@ -36,22 +36,22 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
 
   const getFacultyColor = (facultyId: string): string => {
     const f = facultyList.find((item) => item.id === facultyId);
-    return f?.color || '#6366f1';
+    return f?.color || '#2563eb';
   };
 
   return (
     <div className="w-full overflow-x-auto pb-4">
-      <div className="min-w-[840px] rounded-2xl border border-slate-800 bg-slate-950/70 overflow-hidden shadow-2xl">
+      <div className="min-w-[840px] rounded-xl border border-slate-200 bg-white overflow-hidden shadow-xs">
         {/* Table Header: Days of the week */}
-        <div className="grid grid-cols-6 border-b border-slate-800 bg-slate-900/90 text-xs font-semibold text-slate-300">
-          <div className="p-3 text-center border-r border-slate-800/80 uppercase tracking-wider text-slate-400 flex items-center justify-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-indigo-400" />
+        <div className="grid grid-cols-6 border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700">
+          <div className="p-3 text-center border-r border-slate-200 uppercase tracking-wider text-slate-500 flex items-center justify-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-slate-500" />
             <span>Time Slot</span>
           </div>
           {DAYS_OF_WEEK.map((day) => (
             <div
               key={day}
-              className="p-3 text-center border-r border-slate-800/80 last:border-r-0 uppercase tracking-wider font-bold text-slate-200"
+              className="p-3 text-center border-r border-slate-200 last:border-r-0 uppercase tracking-wider font-bold text-slate-800"
             >
               {day}
             </div>
@@ -59,20 +59,20 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
         </div>
 
         {/* Table Body: Slots x Days */}
-        <div className="divide-y divide-slate-800/60">
+        <div className="divide-y divide-slate-200">
           {TIME_SLOTS.map((slot) => (
             <div key={slot.label} className="grid grid-cols-6 min-h-[110px]">
               {/* Time Label Column */}
-              <div className="p-3 border-r border-slate-800/80 bg-slate-900/40 flex flex-col justify-center items-center text-center">
-                <span className="text-xs font-bold text-slate-200">{slot.start}</span>
-                <span className="text-[10px] text-slate-500 font-medium">to</span>
-                <span className="text-xs font-medium text-slate-400">{slot.end}</span>
+              <div className="p-3 border-r border-slate-200 bg-slate-50/60 flex flex-col justify-center items-center text-center">
+                <span className="text-xs font-bold text-slate-800">{slot.start}</span>
+                <span className="text-[10px] text-slate-400 font-medium">to</span>
+                <span className="text-xs font-medium text-slate-600">{slot.end}</span>
               </div>
 
               {/* Day Columns */}
               {DAYS_OF_WEEK.map((day) => {
                 const entry = getEntryForSlot(day, slot.start);
-                const facultyColor = entry ? getFacultyColor(entry.facultyId) : '#6366f1';
+                const facultyColor = entry ? getFacultyColor(entry.facultyId) : '#2563eb';
                 const isHighlighted =
                   entry &&
                   ((highlightFacultyId && entry.facultyId === highlightFacultyId) ||
@@ -81,26 +81,22 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                 return (
                   <div
                     key={`${day}-${slot.label}`}
-                    className={`p-2 border-r border-slate-800/80 last:border-r-0 flex flex-col justify-center transition-colors relative ${
-                      isHighlighted ? 'bg-indigo-950/20' : 'hover:bg-slate-900/30'
+                    className={`p-2 border-r border-slate-200 last:border-r-0 flex flex-col justify-center transition-colors relative ${
+                      isHighlighted ? 'bg-blue-50/50' : 'hover:bg-slate-50/80'
                     }`}
                   >
                     {entry ? (
                       <div
-                        className={`group relative rounded-xl p-2.5 transition-all text-left flex flex-col justify-between h-full border ${
-                          entry.sessionType === 'lab'
-                            ? 'bg-gradient-to-br from-purple-950/40 to-slate-900/90 border-purple-500/30 hover:border-purple-400/50'
-                            : 'bg-gradient-to-br from-indigo-950/30 to-slate-900/90 border-indigo-500/25 hover:border-indigo-400/50'
-                        } shadow-md`}
-                        style={{ borderLeftColor: facultyColor, borderLeftWidth: '4px' }}
+                        className="group relative rounded-lg p-2.5 transition-all text-left flex flex-col justify-between h-full bg-white border border-slate-200 shadow-xs hover:border-slate-300 hover:shadow-sm"
+                        style={{ borderLeftColor: facultyColor, borderLeftWidth: '3px' }}
                       >
                         {/* Top: Session Type + Actions */}
                         <div className="flex items-start justify-between gap-1 mb-1">
                           <span
-                            className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${
+                            className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
                               entry.sessionType === 'lab'
-                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                                : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                : 'bg-blue-50 text-blue-700 border border-blue-200'
                             }`}
                           >
                             {entry.sessionType === 'lab' ? (
@@ -123,7 +119,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                                     onEditEntry(entry);
                                   }}
                                   title="Edit entry"
-                                  className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                                  className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer shadow-xs"
                                 >
                                   <Edit2 className="w-3 h-3" />
                                 </button>
@@ -135,7 +131,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                                     onDeleteEntry(entry.id);
                                   }}
                                   title="Delete entry"
-                                  className="p-1 rounded bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-300"
+                                  className="p-1 rounded bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 cursor-pointer shadow-xs"
                                 >
                                   <Trash2 className="w-3 h-3" />
                                 </button>
@@ -145,29 +141,29 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                         </div>
 
                         {/* Subject Title */}
-                        <div className="font-semibold text-xs text-slate-100 line-clamp-2 leading-tight mb-1.5">
+                        <div className="font-bold text-xs text-slate-900 line-clamp-2 leading-tight mb-1.5">
                           {entry.subjectName}
                         </div>
 
                         {/* Meta details */}
-                        <div className="space-y-1 text-[11px] text-slate-400 mt-auto">
-                          <div className="flex items-center gap-1 truncate text-slate-300 font-medium">
+                        <div className="space-y-1 text-[11px] text-slate-600 mt-auto">
+                          <div className="flex items-center gap-1 truncate text-slate-700 font-medium">
                             <User className="w-3 h-3 text-slate-400 shrink-0" />
                             <span className="truncate">{entry.facultyName}</span>
                           </div>
                           <div className="flex items-center justify-between gap-1 text-[10px]">
-                            <span className="flex items-center gap-1 text-slate-400 truncate">
-                              <MapPin className="w-3 h-3 text-indigo-400 shrink-0" />
+                            <span className="flex items-center gap-1 text-slate-500 truncate">
+                              <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
                               <span className="truncate">{entry.roomName}</span>
                             </span>
-                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800/80 text-slate-300 shrink-0">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 shrink-0 font-medium">
                               {entry.batchName.replace('Computer Science - Year 3 ', '')}
                             </span>
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="h-full flex items-center justify-center text-[11px] text-slate-700 font-mono">
+                      <div className="h-full flex items-center justify-center text-[11px] text-slate-300 font-mono">
                         —
                       </div>
                     )}

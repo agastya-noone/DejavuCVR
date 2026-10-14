@@ -23,7 +23,7 @@ export const FacultyModal: React.FC<FacultyModalProps> = ({
   const [email, setEmail] = useState('');
   const [designation, setDesignation] = useState('Professor');
   const [maxHoursPerWeek, setMaxHoursPerWeek] = useState(16);
-  const [color, setColor] = useState('#6366f1');
+  const [color, setColor] = useState('#2563eb');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -33,14 +33,14 @@ export const FacultyModal: React.FC<FacultyModalProps> = ({
       setEmail(facultyToEdit.email);
       setDesignation(facultyToEdit.designation);
       setMaxHoursPerWeek(facultyToEdit.maxHoursPerWeek);
-      setColor(facultyToEdit.color || '#6366f1');
+      setColor(facultyToEdit.color || '#2563eb');
     } else {
       setName('');
       setDepartment('Computer Science & AI');
       setEmail('');
       setDesignation('Professor');
       setMaxHoursPerWeek(16);
-      setColor('#6366f1');
+      setColor('#2563eb');
     }
   }, [facultyToEdit, isOpen]);
 
@@ -66,95 +66,99 @@ export const FacultyModal: React.FC<FacultyModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="text-base font-bold text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden">
+        <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <h3 className="text-base font-bold text-slate-900">
             {facultyToEdit ? 'Edit Faculty Record' : 'Add New Faculty Member'}
           </h3>
-          <button onClick={onClose} aria-label="Close modal" className="text-slate-400 hover:text-white">
+          <button
+            onClick={onClose}
+            aria-label="Close modal"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Full Name *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name *</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Dr. Alan Turing"
-              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Department *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Department *</label>
             <input
               type="text"
               required
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
-              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Designation</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Designation</label>
               <input
                 type="text"
                 value={designation}
                 onChange={(e) => setDesignation(e.target.value)}
-                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Max Hours/Week</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Max Hours/Week</label>
               <input
                 type="number"
                 min="2"
                 max="40"
                 value={maxHoursPerWeek}
                 onChange={(e) => setMaxHoursPerWeek(Number(e.target.value))}
-                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Campus Email *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Campus Email *</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="turing@campus.edu"
-              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Timetable Tag Color</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Timetable Tag Color</label>
             <div className="flex items-center gap-3">
               <input
                 type="color"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                className="w-9 h-9 rounded-lg border-0 bg-transparent cursor-pointer"
+                className="w-8 h-8 rounded-md border border-slate-300 bg-white cursor-pointer"
               />
-              <span className="text-xs font-mono text-slate-400">{color}</span>
+              <span className="text-xs font-mono text-slate-600">{color}</span>
             </div>
           </div>
-          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+              className="px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/30"
+              className="px-4 py-1.5 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-xs transition-all cursor-pointer disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Faculty'}
             </button>
@@ -221,52 +225,56 @@ export const BatchModal: React.FC<BatchModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="text-base font-bold text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden">
+        <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <h3 className="text-base font-bold text-slate-900">
             {batchToEdit ? 'Edit Student Batch' : 'Create Student Batch'}
           </h3>
-          <button onClick={onClose} aria-label="Close modal" className="text-slate-400 hover:text-white">
+          <button
+            onClick={onClose}
+            aria-label="Close modal"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Batch Name *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Batch Name *</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Computer Science - Year 3 (Batch A)"
-              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Academic Year</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Academic Year</label>
               <input
                 type="text"
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
                 placeholder="Year 3"
-                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Semester</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Semester</label>
               <input
                 type="text"
                 value={semester}
                 onChange={(e) => setSemester(e.target.value)}
                 placeholder="Semester 5"
-                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Enrolled Student Count *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Enrolled Student Count *</label>
             <input
               type="number"
               min="1"
@@ -274,24 +282,24 @@ export const BatchModal: React.FC<BatchModalProps> = ({
               required
               value={studentCount}
               onChange={(e) => setStudentCount(Number(e.target.value))}
-              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
             />
-            <p className="text-[10px] text-slate-500 mt-1">
+            <p className="text-[11px] text-slate-500 mt-1">
               Used by scheduler to guarantee classroom capacity constraints.
             </p>
           </div>
-          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+              className="px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/30"
+              className="px-4 py-1.5 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-xs transition-all cursor-pointer disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Batch'}
             </button>
@@ -374,56 +382,60 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="text-base font-bold text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden">
+        <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <h3 className="text-base font-bold text-slate-900">
             {subjectToEdit ? 'Edit Curriculum Subject' : 'Add Curriculum Subject'}
           </h3>
-          <button onClick={onClose} aria-label="Close modal" className="text-slate-400 hover:text-white">
+          <button
+            onClick={onClose}
+            aria-label="Close modal"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Code *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Code *</label>
               <input
                 type="text"
                 required
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="CS301"
-                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500 font-mono"
+                className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs font-mono"
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Course Title *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Course Title *</label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Operating Systems"
-                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Credits</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Credits</label>
               <input
                 type="number"
                 min="1"
                 max="10"
                 value={credits}
                 onChange={(e) => setCredits(Number(e.target.value))}
-                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Weekly Slots *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Weekly Slots *</label>
               <input
                 type="number"
                 min="1"
@@ -431,18 +443,18 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
                 required
                 value={weeklyLectures}
                 onChange={(e) => setWeeklyLectures(Number(e.target.value))}
-                className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Target Batch *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Target Batch *</label>
             <select
               value={batchId}
               onChange={(e) => setBatchId(e.target.value)}
               required
-              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
             >
               {batches.map((b) => (
                 <option key={b.id} value={b.id}>
@@ -453,12 +465,12 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Assigned Faculty *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Assigned Faculty *</label>
             <select
               value={facultyId}
               onChange={(e) => setFacultyId(e.target.value)}
               required
-              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
             >
               {faculty.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -474,26 +486,26 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
                 type="checkbox"
                 checked={isLab}
                 onChange={(e) => setIsLab(e.target.checked)}
-                className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-800 focus:ring-0"
+                className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-0"
               />
-              <span className="text-xs text-slate-200 font-medium">
+              <span className="text-xs text-slate-700 font-medium">
                 Requires Specialized Laboratory Facility (isLab = true)
               </span>
             </label>
           </div>
 
-          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+              className="px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/30"
+              className="px-4 py-1.5 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-xs transition-all cursor-pointer disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Subject'}
             </button>
@@ -560,39 +572,43 @@ export const RoomModal: React.FC<RoomModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="text-base font-bold text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden">
+        <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <h3 className="text-base font-bold text-slate-900">
             {roomToEdit ? 'Edit Campus Facility' : 'Add Campus Facility'}
           </h3>
-          <button onClick={onClose} aria-label="Close modal" className="text-slate-400 hover:text-white">
+          <button
+            onClick={onClose}
+            aria-label="Close modal"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Room Designation *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Room Designation *</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Turing Lecture Hall 301"
-              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Building / Wing</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Building / Wing</label>
             <input
               type="text"
               value={building}
               onChange={(e) => setBuilding(e.target.value)}
-              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Seating Capacity *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Seating Capacity *</label>
             <input
               type="number"
               min="1"
@@ -600,7 +616,7 @@ export const RoomModal: React.FC<RoomModalProps> = ({
               required
               value={capacity}
               onChange={(e) => setCapacity(Number(e.target.value))}
-              className="w-full bg-slate-950 text-xs text-slate-200 px-3.5 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
             />
           </div>
           <div className="pt-1">
@@ -609,25 +625,25 @@ export const RoomModal: React.FC<RoomModalProps> = ({
                 type="checkbox"
                 checked={isLab}
                 onChange={(e) => setIsLab(e.target.checked)}
-                className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-800 focus:ring-0"
+                className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-0"
               />
-              <span className="text-xs text-slate-200 font-medium">
+              <span className="text-xs text-slate-700 font-medium">
                 Equipped as Laboratory (Computers / Apparatus)
               </span>
             </label>
           </div>
-          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+              className="px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/30"
+              className="px-4 py-1.5 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-xs transition-all cursor-pointer disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Room'}
             </button>

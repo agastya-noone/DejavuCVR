@@ -6,8 +6,6 @@ import {
   Clock,
   MapPin,
   User,
-  Beaker,
-  BookOpen,
   Filter,
   Layers,
   Sparkles,
@@ -29,8 +27,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   batches,
   faculty,
   currentBatchId,
-  onSelectBatch,
-  onRefresh
+  onSelectBatch
 }) => {
   const [selectedDay, setSelectedDay] = useState<DayOfWeek | 'ALL'>('ALL');
   const [sessionFilter, setSessionFilter] = useState<'ALL' | 'lecture' | 'lab'>('ALL');
@@ -72,35 +69,33 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner / Batch Info */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-900/30 shadow-xl relative overflow-hidden">
-        <div className="absolute -top-12 -right-12 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        
+      <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Student Portal
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-500">
                 {activeBatch?.year || 'Academic Year'} • {activeBatch?.semester || 'Semester'}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               {activeBatch ? activeBatch.name : 'Computer Science - Year 3 (Batch A)'}
             </h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Personalized weekly schedule, lecture rooms, and faculty contacts.
+            <p className="text-sm text-slate-500 mt-1">
+              Personalized weekly course schedule, lecture classrooms, and faculty contacts.
             </p>
           </div>
 
-          {/* Batch Selector (if multiple batches exist) */}
+          {/* Batch Selector */}
           {batches.length > 0 && onSelectBatch && (
-            <div className="flex items-center gap-2 bg-slate-950/80 p-2 rounded-2xl border border-slate-800">
-              <span className="text-xs text-slate-400 pl-2">Batch:</span>
+            <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+              <span className="text-xs text-slate-600 pl-1 font-medium">Cohort:</span>
               <select
                 value={currentBatchId}
                 onChange={(e) => onSelectBatch(e.target.value)}
-                className="bg-slate-900 text-xs text-slate-200 font-semibold px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-indigo-500"
+                className="bg-white text-xs text-slate-900 font-semibold px-2.5 py-1.5 rounded-md border border-slate-300 focus:outline-none focus:border-blue-600 shadow-xs"
               >
                 {batches.map((b) => (
                   <option key={b.id} value={b.id}>
@@ -116,110 +111,110 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       {/* Today's Schedule & Upcoming Highlight */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Upcoming class hero card */}
-        <div className="md:col-span-2 p-5 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-lg flex flex-col justify-between">
+        <div className="md:col-span-2 p-5 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">Next Scheduled Session</h3>
-                <p className="text-xs text-slate-400">Targeting today ({todayName})</p>
+                <h3 className="text-sm font-bold text-slate-900">Next Scheduled Class</h3>
+                <p className="text-xs text-slate-500">Today ({todayName})</p>
               </div>
             </div>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-indigo-300">
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
               {todayClasses.length} sessions today
             </span>
           </div>
 
           {upcomingLecture ? (
-            <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-950/50 via-slate-950 to-purple-950/30 border border-indigo-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                       upcomingLecture.sessionType === 'lab'
-                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                        : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                        : 'bg-blue-50 text-blue-700 border border-blue-200'
                     }`}
                   >
                     {upcomingLecture.sessionType.toUpperCase()}
                   </span>
-                  <span className="text-xs font-mono text-indigo-300 font-semibold">
+                  <span className="text-xs font-semibold text-slate-700">
                     {upcomingLecture.startTime} - {upcomingLecture.endTime}
                   </span>
                 </div>
-                <h4 className="text-base font-bold text-white">
+                <h4 className="text-base font-bold text-slate-900">
                   {upcomingLecture.subjectName}
                 </h4>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600">
                   <span className="flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-indigo-400" />
+                    <User className="w-3.5 h-3.5 text-slate-400" />
                     {upcomingLecture.facultyName}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-purple-400" />
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
                     {upcomingLecture.roomName}
                   </span>
                 </div>
               </div>
 
-              <div className="shrink-0 flex sm:flex-col items-center justify-center gap-1 bg-indigo-600/20 px-3 py-2 rounded-xl border border-indigo-500/30 text-center">
-                <Clock className="w-4 h-4 text-indigo-400" />
-                <span className="text-xs font-bold text-white">{upcomingLecture.startTime}</span>
+              <div className="shrink-0 flex sm:flex-col items-center justify-center gap-0.5 bg-white px-3 py-2 rounded-lg border border-slate-200 text-center shadow-xs">
+                <Clock className="w-4 h-4 text-blue-600" />
+                <span className="text-xs font-bold text-slate-900">{upcomingLecture.startTime}</span>
               </div>
             </div>
           ) : (
-            <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-center py-6 text-slate-400 text-xs">
-              No more sessions scheduled for today ({todayName}). Enjoy your study break!
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 text-center py-6 text-slate-500 text-xs">
+              No further sessions scheduled for today ({todayName}).
             </div>
           )}
         </div>
 
         {/* Quick batch statistics */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-lg flex flex-col justify-between">
-          <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-            <Layers className="w-4 h-4 text-indigo-400" />
+        <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+          <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+            <Layers className="w-4 h-4 text-slate-500" />
             Batch Workload
           </h3>
           <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs py-1 border-b border-slate-800">
-              <span className="text-slate-400">Total Weekly Lectures</span>
-              <span className="font-bold text-white">
+            <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100">
+              <span className="text-slate-500">Weekly Lectures</span>
+              <span className="font-bold text-slate-900">
                 {batchEntries.filter((e) => e.sessionType === 'lecture').length}
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs py-1 border-b border-slate-800">
-              <span className="text-slate-400">Practical Lab Sessions</span>
-              <span className="font-bold text-purple-400">
+            <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100">
+              <span className="text-slate-500">Laboratory Practicals</span>
+              <span className="font-bold text-indigo-700">
                 {batchEntries.filter((e) => e.sessionType === 'lab').length}
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs py-1 border-b border-slate-800">
-              <span className="text-slate-400">Total Weekly Slots</span>
-              <span className="font-bold text-indigo-400">{batchEntries.length} slots</span>
+            <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100">
+              <span className="text-slate-500">Total Weekly Slots</span>
+              <span className="font-bold text-blue-700">{batchEntries.length} slots</span>
             </div>
             <div className="flex items-center justify-between text-xs py-1">
-              <span className="text-slate-400">Enrolled Students</span>
-              <span className="font-bold text-slate-300">{activeBatch?.studentCount || 0}</span>
+              <span className="text-slate-500">Enrolled Students</span>
+              <span className="font-bold text-slate-800">{activeBatch?.studentCount || 0}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filter and View Controls Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/70 border border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 rounded-xl bg-white border border-slate-200 shadow-xs">
         {/* Day Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-          <span className="text-xs font-medium text-slate-400 mr-1 flex items-center gap-1 shrink-0">
-            <Filter className="w-3.5 h-3.5 text-indigo-400" /> Day:
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0">
+          <span className="text-xs font-medium text-slate-500 mr-1 flex items-center gap-1 shrink-0">
+            <Filter className="w-3.5 h-3.5 text-slate-400" /> Day:
           </span>
           <button
             onClick={() => setSelectedDay('ALL')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-colors ${
+            className={`px-3 py-1 rounded-md text-xs font-semibold shrink-0 transition-colors cursor-pointer ${
               selectedDay === 'ALL'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             All Week
@@ -228,10 +223,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-colors ${
+              className={`px-3 py-1 rounded-md text-xs font-semibold shrink-0 transition-colors cursor-pointer ${
                 selectedDay === day
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
               {day}
@@ -245,7 +240,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           <select
             value={sessionFilter}
             onChange={(e) => setSessionFilter(e.target.value as any)}
-            className="bg-slate-950 text-xs text-slate-300 px-3 py-1.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500"
+            className="bg-white text-xs text-slate-900 px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 shadow-xs font-medium"
           >
             <option value="ALL">All Session Types</option>
             <option value="lecture">Lectures Only</option>
@@ -253,19 +248,19 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           </select>
 
           {/* Mode toggle */}
-          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-3 py-1 text-xs rounded-lg font-medium transition-all ${
-                viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1 text-xs rounded font-medium transition-all cursor-pointer ${
+                viewMode === 'grid' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Grid
             </button>
             <button
               onClick={() => setViewMode('agenda')}
-              className={`px-3 py-1 text-xs rounded-lg font-medium transition-all ${
-                viewMode === 'agenda' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1 text-xs rounded font-medium transition-all cursor-pointer ${
+                viewMode === 'agenda' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               List
@@ -276,19 +271,19 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
       {/* Main Content Area */}
       {batchEntries.length === 0 ? (
-        <div className="p-12 text-center rounded-3xl bg-slate-900/40 border border-dashed border-slate-800 space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mx-auto border border-indigo-500/20">
-            <CalendarDays className="w-7 h-7" />
+        <div className="p-12 text-center rounded-2xl bg-white border border-dashed border-slate-300 space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mx-auto border border-slate-200">
+            <CalendarDays className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">No Timetable Assigned Yet</h3>
-            <p className="text-sm text-slate-400 max-w-md mx-auto mt-1">
-              Your academic department has not yet published the semester schedule for{' '}
-              <span className="text-indigo-300 font-semibold">{activeBatch?.name || 'this batch'}</span>.
+            <h3 className="text-base font-bold text-slate-900">No Timetable Assigned Yet</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+              Your academic department has not yet published the schedule for{' '}
+              <span className="text-slate-800 font-semibold">{activeBatch?.name || 'this batch'}</span>.
             </p>
           </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/60 text-xs text-slate-300">
-            <Info className="w-3.5 h-3.5 text-indigo-400" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
+            <Info className="w-3.5 h-3.5 text-slate-400" />
             Tip: Administrators can initialize demo data or generate schedules in the Admin view.
           </div>
         </div>
@@ -306,7 +301,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               return (
                 <div
                   key={day}
-                  className="p-8 text-center rounded-2xl bg-slate-900/40 border border-slate-800 text-slate-500 text-sm"
+                  className="p-8 text-center rounded-xl bg-white border border-slate-200 text-slate-500 text-xs"
                 >
                   No classes matching filters on {day}.
                 </div>
@@ -316,47 +311,47 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             if (dayList.length === 0) return null;
 
             return (
-              <div key={day} className="rounded-2xl border border-slate-800 bg-slate-950/60 overflow-hidden">
-                <div className="px-4 py-2.5 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between">
-                  <span className="text-sm font-bold text-slate-200">{day}</span>
-                  <span className="text-xs text-slate-400 font-mono">{dayList.length} sessions</span>
+              <div key={day} className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+                <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">{day}</span>
+                  <span className="text-xs text-slate-500 font-medium">{dayList.length} sessions</span>
                 </div>
-                <div className="divide-y divide-slate-800/60 p-2 space-y-2">
+                <div className="divide-y divide-slate-100 p-2 space-y-1.5">
                   {dayList.map((entry) => (
                     <div
                       key={entry.id}
-                      className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      className="p-3 rounded-lg bg-slate-50/70 hover:bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                               entry.sessionType === 'lab'
-                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                                : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                : 'bg-blue-50 text-blue-700 border border-blue-200'
                             }`}
                           >
                             {entry.sessionType.toUpperCase()}
                           </span>
-                          <span className="text-xs font-mono font-bold text-indigo-300">
+                          <span className="text-xs font-semibold text-slate-700">
                             {entry.startTime} - {entry.endTime}
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold text-white">{entry.subjectName}</h4>
-                        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
-                          <span className="flex items-center gap-1 text-slate-300">
+                        <h4 className="text-sm font-bold text-slate-900">{entry.subjectName}</h4>
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600">
+                          <span className="flex items-center gap-1">
                             <User className="w-3.5 h-3.5 text-slate-400" />
                             {entry.facultyName}
                           </span>
-                          <span className="flex items-center gap-1 text-slate-300">
-                            <MapPin className="w-3.5 h-3.5 text-indigo-400" />
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400" />
                             {entry.roomName}
                           </span>
                         </div>
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-lg">
+                        <span className="text-xs text-slate-700 bg-white border border-slate-200 px-2.5 py-1 rounded-md shadow-xs font-medium">
                           {entry.batchName}
                         </span>
                       </div>

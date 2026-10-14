@@ -149,12 +149,12 @@ function DashboardRouter() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center mb-4 border border-indigo-500/30 animate-pulse">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 border border-blue-200">
           <Calendar className="w-6 h-6" />
         </div>
-        <Loader2 className="w-6 h-6 text-indigo-500 animate-spin mb-2" />
-        <p className="text-xs text-slate-400 font-medium">Initializing SYNCHRONIQ...</p>
+        <Loader2 className="w-6 h-6 text-blue-600 animate-spin mb-2" />
+        <p className="text-xs text-slate-500 font-medium">Loading SYNCHRONIQ...</p>
       </div>
     );
   }
@@ -165,14 +165,14 @@ function DashboardRouter() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
       <Navbar onRefreshData={() => loadData(true)} isRefreshing={isRefreshing} />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
         {dataLoading ? (
           <div className="py-24 flex flex-col items-center justify-center">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-3" />
-            <p className="text-xs text-slate-400">Synchronizing timetable records from Cloud Firestore...</p>
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
+            <p className="text-xs text-slate-500">Synchronizing timetable records from Cloud Firestore...</p>
           </div>
         ) : role === 'admin' ? (
           <AdminDashboard
@@ -212,8 +212,8 @@ function DashboardRouter() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
-        SYNCHRONIQ • Intelligent Scheduling. Zero Avoidable Conflicts. • Campus Solve Track
+      <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
+        SYNCHRONIQ • Academic Timetable Management System
       </footer>
     </div>
   );

@@ -23,14 +23,10 @@ import {
   MapPin,
   UserCheck,
   Users,
-  Calendar,
   CheckCircle2,
-  Info,
-  Clock,
   ExternalLink,
   Zap,
-  Filter,
-  Eye
+  Filter
 } from 'lucide-react';
 
 export interface ConflictMapProps {
@@ -216,10 +212,8 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
       setSimulation({ active: false, simulatedEntries: [] });
       setSelectedEntryId(null);
     } else {
-      // Find two real entries to create a synthetic double booking on Monday at 09:00
       const cloned = [...effectiveEntries];
       if (cloned.length >= 2) {
-        // Clone first entry and schedule another entry in the same room at the same time
         const targetRoom = rooms[0] || { id: 'room_sim', name: 'Lecture Hall 101' };
         const sim1: TimetableEntry = {
           ...cloned[0],
@@ -253,7 +247,7 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
   };
 
   // ---------------------------------------------------------------------------
-  // D3 TIMELINE / GANTT OVERLAY VISUALIZATION
+  // D3 TIMELINE / GANTT OVERLAY VISUALIZATION (PROFESSIONAL LIGHT THEME)
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (viewType !== 'timeline' || !timelineSvgRef.current) return;
@@ -298,8 +292,8 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
     }
 
     // Canvas dimensions
-    const margin = { top: 60, right: 40, bottom: 40, left: 190 };
-    const rowHeight = 75;
+    const margin = { top: 50, right: 30, bottom: 30, left: 190 };
+    const rowHeight = 72;
     const innerWidth = 980;
     const innerHeight = resourcesList.length * rowHeight;
     const totalWidth = innerWidth + margin.left + margin.right;
@@ -307,30 +301,25 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
 
     svg.attr('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
 
-    // Definitions (Gradients & Filters for collision glow)
+    // Definitions
     const defs = svg.append('defs');
-
-    // Conflict Glow Filter
-    const filter = defs.append('filter').attr('id', 'collision-glow').attr('x', '-30%').attr('y', '-30%').attr('width', '160%').attr('height', '160%');
-    filter.append('feDropShadow').attr('dx', '0').attr('dy', '0').attr('stdDeviation', '4').attr('flood-color', '#ef4444').attr('flood-opacity', '0.8');
 
     // Warning Striped Pattern for double booking
     const pattern = defs
       .append('pattern')
-      .attr('id', 'conflict-stripes')
-      .attr('width', 10)
-      .attr('height', 10)
+      .attr('id', 'conflict-stripes-light')
+      .attr('width', 8)
+      .attr('height', 8)
       .attr('patternTransform', 'rotate(45 0 0)')
       .attr('patternUnits', 'userSpaceOnUse');
-    pattern.append('line').attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 10).attr('stroke', '#ef4444').attr('stroke-width', 4).attr('stroke-opacity', 0.4);
-    pattern.append('line').attr('x1', 5).attr('y1', 0).attr('x2', 5).attr('y2', 10).attr('stroke', '#7f1d1d').attr('stroke-width', 4).attr('stroke-opacity', 0.6);
+    pattern.append('line').attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 8).attr('stroke', '#fda4af').attr('stroke-width', 2.5);
 
     // Zoom container
     const gContainer = svg.append('g').attr('class', 'zoom-container');
 
     // Time scale (09:00 -> 17:00, or 540 to 1020 minutes)
-    const minTime = 540; // 09:00
-    const maxTime = 1020; // 17:00
+    const minTime = 540;
+    const maxTime = 1020;
     const xScale = d3.scaleLinear().domain([minTime, maxTime]).range([margin.left, margin.left + innerWidth]);
 
     // Resource Y scale
@@ -367,20 +356,20 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
         .attr('y', y)
         .attr('width', innerWidth)
         .attr('height', h)
-        .attr('rx', 8)
-        .attr('fill', i % 2 === 0 ? '#0f172a' : '#090d16')
-        .attr('stroke', '#1e293b')
+        .attr('rx', 6)
+        .attr('fill', i % 2 === 0 ? '#f8fafc' : '#ffffff')
+        .attr('stroke', '#e2e8f0')
         .attr('stroke-width', 1);
 
       // Lane header badge (Left label)
-      const labelG = gContainer.append('g').attr('transform', `translate(16, ${y + h / 2 - 10})`);
+      const labelG = gContainer.append('g').attr('transform', `translate(16, ${y + h / 2 - 9})`);
 
       labelG
         .append('text')
         .attr('x', 0)
         .attr('y', 0)
-        .attr('fill', '#f8fafc')
-        .attr('font-size', '13px')
+        .attr('fill', '#0f172a')
+        .attr('font-size', '12px')
         .attr('font-weight', '700')
         .attr('dominant-baseline', 'middle')
         .text(res.name.length > 20 ? res.name.substring(0, 18) + '...' : res.name);
@@ -406,19 +395,19 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
       gContainer
         .append('line')
         .attr('x1', xStart)
-        .attr('y1', margin.top - 10)
+        .attr('y1', margin.top - 6)
         .attr('x2', xStart)
         .attr('y2', margin.top + innerHeight)
-        .attr('stroke', '#334155')
+        .attr('stroke', '#cbd5e1')
         .attr('stroke-dasharray', '2 4')
-        .attr('stroke-opacity', 0.6);
+        .attr('stroke-opacity', 0.8);
 
       // Top time label
       gContainer
         .append('text')
         .attr('x', (xStart + xEnd) / 2)
-        .attr('y', margin.top - 20)
-        .attr('fill', '#94a3b8')
+        .attr('y', margin.top - 16)
+        .attr('fill', '#475569')
         .attr('font-size', '11px')
         .attr('font-weight', '600')
         .attr('text-anchor', 'middle')
@@ -434,20 +423,20 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
       .attr('y', margin.top)
       .attr('width', recessEnd - recessStart)
       .attr('height', innerHeight)
-      .attr('fill', '#fbbf24')
-      .attr('fill-opacity', 0.05);
+      .attr('fill', '#fef3c7')
+      .attr('fill-opacity', 0.6);
 
     gContainer
       .append('text')
       .attr('x', (recessStart + recessEnd) / 2)
       .attr('y', margin.top + innerHeight / 2)
-      .attr('fill', '#d97706')
+      .attr('fill', '#b45309')
       .attr('font-size', '10px')
       .attr('font-weight', '700')
       .attr('letter-spacing', '2px')
       .attr('text-anchor', 'middle')
       .attr('transform', `rotate(-90 ${(recessStart + recessEnd) / 2} ${margin.top + innerHeight / 2})`)
-      .text('CAMPUS RECESS');
+      .text('RECESS');
 
     // Group entries by resource
     const entriesByResource = new Map<string, TimetableEntry[]>();
@@ -470,7 +459,6 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
       const rowY = yScale(resId) || 0;
       const rowH = yScale.bandwidth();
 
-      // Check overlaps among entries in this specific lane
       resEntries.forEach((entry) => {
         const startMin = timeToMinutes(entry.startTime);
         const endMin = timeToMinutes(entry.endTime);
@@ -480,45 +468,28 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
         const isColliding = collidingEntryIds.has(entry.id);
         const isSelected = selectedEntryId === entry.id;
 
-        // In case of overlap in the same lane, check if this is overlapping another in the same lane
         const laneOverlaps = resEntries.filter(
           (o) => o.id !== entry.id && isOverlapping(entry.startTime, entry.endTime, o.startTime, o.endTime)
         );
         const hasLaneOverlap = laneOverlaps.length > 0;
 
-        // If there's an in-lane overlap, stack or offset vertically
-        let blockY = rowY + 6;
-        let blockH = rowH - 12;
+        let blockY = rowY + 5;
+        let blockH = rowH - 10;
 
         if (hasLaneOverlap) {
-          // split height to make both visually prominent
           const indexInOverlaps = [entry, ...laneOverlaps].sort((a, b) => a.id.localeCompare(b.id)).findIndex((e) => e.id === entry.id);
           const totalOverlaps = 1 + laneOverlaps.length;
-          blockH = (rowH - 14) / totalOverlaps;
-          blockY = rowY + 6 + indexInOverlaps * (blockH + 2);
+          blockH = (rowH - 12) / totalOverlaps;
+          blockY = rowY + 5 + indexInOverlaps * (blockH + 2);
         }
 
         const entryG = gContainer
           .append('g')
-          .attr('class', `entry-block cursor-pointer transition-all`)
+          .attr('class', 'entry-block cursor-pointer')
           .style('cursor', 'pointer')
           .on('click', () => {
             setSelectedEntryId(entry.id);
           });
-
-        // Pulsing background rect if collision
-        if (isColliding || hasLaneOverlap) {
-          entryG
-            .append('rect')
-            .attr('x', x - 3)
-            .attr('y', blockY - 2)
-            .attr('width', width + 6)
-            .attr('height', blockH + 4)
-            .attr('rx', 6)
-            .attr('fill', '#ef4444')
-            .attr('fill-opacity', 0.25)
-            .attr('filter', 'url(#collision-glow)');
-        }
 
         // Main block rect
         entryG
@@ -531,25 +502,25 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
           .attr(
             'fill',
             isSelected
-              ? '#4f46e5'
+              ? '#dbeafe'
               : isColliding || hasLaneOverlap
-              ? '#7f1d1d'
+              ? '#fff1f2'
               : entry.sessionType === 'lab'
-              ? '#312e81'
-              : '#1e293b'
+              ? '#f5f3ff'
+              : '#ffffff'
           )
           .attr(
             'stroke',
             isSelected
-              ? '#818cf8'
+              ? '#2563eb'
               : isColliding || hasLaneOverlap
-              ? '#ef4444'
+              ? '#e11d48'
               : entry.sessionType === 'lab'
-              ? '#6366f1'
-              : '#3b82f6'
+              ? '#4f46e5'
+              : '#2563eb'
           )
-          .attr('stroke-width', isSelected || isColliding || hasLaneOverlap ? 2 : 1)
-          .attr('stroke-dasharray', isColliding ? '4 2' : 'none');
+          .attr('stroke-width', isSelected || isColliding || hasLaneOverlap ? 2 : 1.5)
+          .attr('stroke-dasharray', isColliding ? '3 2' : 'none');
 
         // Pattern overlay for conflict
         if (isColliding || hasLaneOverlap) {
@@ -560,7 +531,7 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
             .attr('width', width)
             .attr('height', blockH)
             .attr('rx', 5)
-            .attr('fill', 'url(#conflict-stripes)')
+            .attr('fill', 'url(#conflict-stripes-light)')
             .attr('pointer-events', 'none');
         }
 
@@ -571,19 +542,19 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
         textG
           .append('text')
           .attr('x', 0)
-          .attr('y', blockH > 35 ? -6 : 0)
-          .attr('fill', '#ffffff')
-          .attr('font-size', blockH > 35 ? '11px' : '9.5px')
+          .attr('y', blockH > 32 ? -5 : 0)
+          .attr('fill', isColliding ? '#9f1239' : '#0f172a')
+          .attr('font-size', blockH > 32 ? '11px' : '9.5px')
           .attr('font-weight', '700')
-          .attr('dominant-baseline', blockH > 35 ? 'auto' : 'middle')
+          .attr('dominant-baseline', blockH > 32 ? 'auto' : 'middle')
           .text(() => {
             const label = `${entry.subjectName}`;
             const maxChars = Math.floor(width / 7.5);
             return label.length > maxChars ? label.slice(0, Math.max(4, maxChars - 2)) + '..' : label;
           });
 
-        // Detail line (Batch / Faculty / Room depending on groupBy)
-        if (blockH > 35) {
+        // Detail line
+        if (blockH > 32) {
           const detail =
             groupBy === 'room'
               ? `${entry.batchName} • ${entry.facultyName}`
@@ -595,8 +566,9 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
             .append('text')
             .attr('x', 0)
             .attr('y', 10)
-            .attr('fill', isColliding ? '#fca5a5' : '#94a3b8')
+            .attr('fill', isColliding ? '#be123c' : '#64748b')
             .attr('font-size', '9px')
+            .attr('font-weight', '500')
             .text(() => {
               const maxChars = Math.floor(width / 6.5);
               return detail.length > maxChars ? detail.slice(0, Math.max(4, maxChars - 2)) + '..' : detail;
@@ -607,21 +579,21 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
         if (isColliding || hasLaneOverlap) {
           const badgeG = entryG
             .append('g')
-            .attr('transform', `translate(${x + width - 18}, ${blockY + 4})`);
+            .attr('transform', `translate(${x + width - 16}, ${blockY + 4})`);
 
           badgeG
             .append('circle')
-            .attr('cx', 6)
-            .attr('cy', 6)
-            .attr('r', 7)
-            .attr('fill', '#ef4444');
+            .attr('cx', 5)
+            .attr('cy', 5)
+            .attr('r', 6)
+            .attr('fill', '#e11d48');
 
           badgeG
             .append('text')
-            .attr('x', 6)
-            .attr('y', 9.5)
+            .attr('x', 5)
+            .attr('y', 8)
             .attr('fill', '#ffffff')
-            .attr('font-size', '9px')
+            .attr('font-size', '8.5px')
             .attr('font-weight', '900')
             .attr('text-anchor', 'middle')
             .text('!');
@@ -633,7 +605,6 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
     detectedOverlaps
       .filter((o) => (selectedDay === 'ALL' ? true : o.day === selectedDay))
       .forEach((ov) => {
-        // Find lane coordinates
         const resId = ov.entityId;
         const laneY = yScale(resId);
         if (laneY === undefined) return;
@@ -642,22 +613,20 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
         const xB = xScale(timeToMinutes(ov.entryB.startTime));
         const midX = (xA + xB) / 2;
 
-        // Arched bridge connecting conflicting sessions
         const pathData = `M ${xA + 20} ${laneY + 4} Q ${midX} ${laneY - 14} ${xB + 20} ${laneY + 4}`;
 
         gContainer
           .append('path')
           .attr('d', pathData)
           .attr('fill', 'none')
-          .attr('stroke', '#ef4444')
+          .attr('stroke', '#e11d48')
           .attr('stroke-width', 2)
-          .attr('stroke-dasharray', '3 3')
-          .attr('opacity', 0.85);
+          .attr('stroke-dasharray', '3 3');
 
         // Conflict Tag Bubble at apex of arc
         const tag = gContainer
           .append('g')
-          .attr('transform', `translate(${midX}, ${laneY - 15})`)
+          .attr('transform', `translate(${midX}, ${laneY - 14})`)
           .style('cursor', 'pointer')
           .on('click', () => {
             setSelectedEntryId(ov.entryA.id);
@@ -665,22 +634,22 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
 
         tag
           .append('rect')
-          .attr('x', -35)
-          .attr('y', -10)
-          .attr('width', 70)
+          .attr('x', -32)
+          .attr('y', -9)
+          .attr('width', 64)
           .attr('height', 16)
           .attr('rx', 8)
-          .attr('fill', '#ef4444');
+          .attr('fill', '#e11d48');
 
         tag
           .append('text')
           .attr('x', 0)
-          .attr('y', 2)
+          .attr('y', 3)
           .attr('fill', '#ffffff')
           .attr('font-size', '8px')
-          .attr('font-weight', '800')
+          .attr('font-weight', '700')
           .attr('text-anchor', 'middle')
-          .text('CLASH DETECTED');
+          .text('CLASH');
       });
   }, [
     viewType,
@@ -697,7 +666,7 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
   ]);
 
   // ---------------------------------------------------------------------------
-  // D3 FORCE-DIRECTED COLLISION NETWORK GRAPH
+  // D3 FORCE-DIRECTED COLLISION NETWORK GRAPH (PROFESSIONAL LIGHT THEME)
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (viewType !== 'network' || !networkSvgRef.current) return;
@@ -722,13 +691,12 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
         .append('text')
         .attr('x', width / 2)
         .attr('y', height / 2)
-        .attr('fill', '#94a3b8')
+        .attr('fill', '#64748b')
         .attr('text-anchor', 'middle')
         .text('No schedule entries found for the selected filter.');
       return;
     }
 
-    // Nodes represent sessions
     interface NetworkNode extends d3.SimulationNodeDatum {
       id: string;
       entry: TimetableEntry;
@@ -755,7 +723,6 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
 
     const links: NetworkLink[] = [];
 
-    // Connect nodes that clash
     detectedOverlaps
       .filter((o) => (selectedDay === 'ALL' ? true : o.day === selectedDay))
       .forEach((o) => {
@@ -776,7 +743,6 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
         }
       });
 
-    // D3 Force Simulation
     const simulation = d3
       .forceSimulation<NetworkNode>(nodes)
       .force(
@@ -792,7 +758,6 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
 
     const gContainer = svg.append('g');
 
-    // Zoom
     const zoom = d3
       .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
@@ -801,16 +766,15 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
       });
     svg.call(zoom);
 
-    // Links (Conflict edges)
+    // Links
     const link = gContainer
       .append('g')
       .selectAll('line')
       .data(links)
       .join('line')
-      .attr('stroke', '#ef4444')
-      .attr('stroke-width', 2.5)
-      .attr('stroke-dasharray', '4 3')
-      .attr('stroke-opacity', 0.85);
+      .attr('stroke', '#e11d48')
+      .attr('stroke-width', 2)
+      .attr('stroke-dasharray', '4 3');
 
     // Link labels
     const linkText = gContainer
@@ -818,13 +782,13 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
       .selectAll('text')
       .data(links)
       .join('text')
-      .attr('fill', '#fca5a5')
+      .attr('fill', '#be123c')
       .attr('font-size', '9px')
       .attr('font-weight', '700')
       .attr('text-anchor', 'middle')
       .text((d) => `${d.type} CLASH`);
 
-    // Nodes (Sessions)
+    // Nodes
     const node = gContainer
       .append('g')
       .selectAll('g')
@@ -852,22 +816,20 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
           })
       );
 
-    // Node circles
     node
       .append('circle')
-      .attr('r', (d) => (d.isConflict ? 24 : 18))
-      .attr('fill', (d) => (d.isConflict ? '#7f1d1d' : '#1e293b'))
+      .attr('r', (d) => (d.isConflict ? 22 : 18))
+      .attr('fill', (d) => (d.isConflict ? '#fff1f2' : '#ffffff'))
       .attr('stroke', (d) =>
-        d.id === selectedEntryId ? '#818cf8' : d.isConflict ? '#ef4444' : '#3b82f6'
+        d.id === selectedEntryId ? '#1d4ed8' : d.isConflict ? '#e11d48' : '#2563eb'
       )
       .attr('stroke-width', (d) => (d.id === selectedEntryId ? 3 : d.isConflict ? 2.5 : 1.5));
 
-    // Node labels
     node
       .append('text')
       .attr('dy', 4)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#ffffff')
+      .attr('fill', (d) => (d.isConflict ? '#9f1239' : '#0f172a'))
       .attr('font-size', '9px')
       .attr('font-weight', '700')
       .text((d) => d.entry.subjectName.slice(0, 6));
@@ -881,7 +843,7 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
 
       linkText
         .attr('x', (d) => (((d.source as NetworkNode).x || 0) + ((d.target as NetworkNode).x || 0)) / 2)
-        .attr('y', (d) => (((d.source as NetworkNode).y || 0) + ((d.target as NetworkNode).y || 0)) / 2 - 4);
+        .attr('y', (d) => (((d.source as NetworkNode).x || 0) + ((d.target as NetworkNode).x || 0)) / 2 - 4);
 
       node.attr('transform', (d) => `translate(${d.x || 0}, ${d.y || 0})`);
     });
@@ -923,86 +885,86 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Controller Bar */}
-      <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+      <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         {/* Left: Heading & Status */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
-            <Flame className="w-5 h-5 text-rose-500" />
+          <div className="w-10 h-10 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center shrink-0">
+            <Flame className="w-5 h-5 text-rose-600" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-white">Interactive Schedule Conflict Map</h3>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                D3.js Collision Engine
+              <h3 className="text-sm font-bold text-slate-900">Schedule Conflict Map</h3>
+              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                D3.js Visualization
               </span>
               {simulation.active && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 animate-pulse">
-                  <Zap className="w-3 h-3 text-amber-400" /> Test Double-Booking Active
+                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-amber-600" /> Test Overlap Active
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500">
               Visualizes spatial and temporal double-bookings across rooms, faculty, and student cohorts.
             </p>
           </div>
         </div>
 
-        {/* Right: Quick Action Controls */}
+        {/* Right: Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {/* View mode toggle */}
-          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
             <button
               onClick={() => setViewType('timeline')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                viewType === 'timeline' ? 'bg-violet-600 text-white shadow' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1.5 rounded-md font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                viewType === 'timeline' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Layers className="w-3.5 h-3.5" /> Timeline Matrix
             </button>
             <button
               onClick={() => setViewType('network')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                viewType === 'network' ? 'bg-violet-600 text-white shadow' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1.5 rounded-md font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                viewType === 'network' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" /> Collision Graph
             </button>
           </div>
 
-          {/* Simulate Double-Booking button (for evaluator testing) */}
+          {/* Simulate Double-Booking button */}
           <button
             onClick={handleToggleSimulation}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 shadow-xs ${
               simulation.active
-                ? 'bg-amber-950/40 border-amber-500/50 text-amber-300 hover:bg-amber-900/50'
-                : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300 hover:text-white'
+                ? 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
+                : 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700'
             }`}
           >
-            <Zap className={`w-3.5 h-3.5 ${simulation.active ? 'text-amber-400' : 'text-slate-400'}`} />
-            {simulation.active ? 'Clear Test Collision' : '⚡ Simulate Test Collision'}
+            <Zap className={`w-3.5 h-3.5 ${simulation.active ? 'text-amber-600' : 'text-slate-400'}`} />
+            {simulation.active ? 'Clear Test Overlap' : 'Simulate Test Conflict'}
           </button>
 
           {/* D3 Zoom Controls */}
           {viewType === 'timeline' && (
-            <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <div className="flex items-center bg-white p-0.5 rounded-lg border border-slate-300 shadow-xs">
               <button
                 onClick={handleZoomIn}
                 title="Zoom In"
-                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg cursor-pointer"
+                className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md cursor-pointer"
               >
                 <ZoomIn className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={handleZoomOut}
                 title="Zoom Out"
-                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg cursor-pointer"
+                className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md cursor-pointer"
               >
                 <ZoomOut className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={handleResetZoom}
                 title="Reset View"
-                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg cursor-pointer"
+                className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
@@ -1012,32 +974,32 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
       </div>
 
       {/* Filter Ribbon */}
-      <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-        {/* Resource Dimension (Group By) */}
+      <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+        {/* Resource Dimension */}
         {viewType === 'timeline' && (
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-medium">Lanes:</span>
-            <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+            <span className="text-slate-500 font-medium">Lanes:</span>
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-md border border-slate-200">
               <button
                 onClick={() => setGroupBy('room')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer flex items-center gap-1 ${
-                  groupBy === 'room' ? 'bg-violet-600 text-white' : 'text-slate-400'
+                className={`px-2.5 py-1 rounded font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                  groupBy === 'room' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600'
                 }`}
               >
                 <MapPin className="w-3 h-3" /> Rooms ({rooms.length})
               </button>
               <button
                 onClick={() => setGroupBy('faculty')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer flex items-center gap-1 ${
-                  groupBy === 'faculty' ? 'bg-violet-600 text-white' : 'text-slate-400'
+                className={`px-2.5 py-1 rounded font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                  groupBy === 'faculty' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600'
                 }`}
               >
                 <UserCheck className="w-3 h-3" /> Faculty ({faculty.length})
               </button>
               <button
                 onClick={() => setGroupBy('batch')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer flex items-center gap-1 ${
-                  groupBy === 'batch' ? 'bg-violet-600 text-white' : 'text-slate-400'
+                className={`px-2.5 py-1 rounded font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                  groupBy === 'batch' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600'
                 }`}
               >
                 <Users className="w-3 h-3" /> Batches ({batches.length})
@@ -1047,14 +1009,14 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
         )}
 
         {/* Day Selector */}
-        <div className="flex items-center gap-1.5 overflow-x-auto">
-          <span className="text-slate-400 font-medium mr-1">Day:</span>
+        <div className="flex items-center gap-1 overflow-x-auto">
+          <span className="text-slate-500 font-medium mr-1">Day:</span>
           {DAYS_OF_WEEK.map((day) => (
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className={`px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
-                selectedDay === day ? 'bg-indigo-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
+              className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                selectedDay === day ? 'bg-slate-900 text-white shadow-xs font-semibold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
               {day}
@@ -1062,8 +1024,8 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
           ))}
           <button
             onClick={() => setSelectedDay('ALL')}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
-              selectedDay === 'ALL' ? 'bg-indigo-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
+            className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+              selectedDay === 'ALL' ? 'bg-slate-900 text-white shadow-xs font-semibold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             All Days
@@ -1073,10 +1035,10 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
         {/* Conflict Filter Toggle */}
         <button
           onClick={() => setShowConflictsOnly(!showConflictsOnly)}
-          className={`px-3 py-1 rounded-lg font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
+          className={`px-3 py-1 rounded-md font-semibold border transition-all cursor-pointer flex items-center gap-1.5 shadow-xs ${
             showConflictsOnly
-              ? 'bg-rose-950/60 border-rose-500/60 text-rose-300'
-              : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+              ? 'bg-rose-50 border-rose-300 text-rose-800'
+              : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
           }`}
         >
           <Filter className="w-3 h-3" />
@@ -1085,16 +1047,16 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
       </div>
 
       {/* Main D3 Visualization Canvas */}
-      <div className="rounded-3xl bg-slate-950 border border-slate-800/90 shadow-2xl p-4 overflow-hidden relative">
+      <div className="rounded-xl bg-white border border-slate-200 shadow-xs p-4 overflow-hidden relative">
         {/* Collision summary counter overlay */}
-        <div className="absolute top-6 right-6 z-10 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 shadow">
+        <div className="absolute top-6 right-6 z-10 flex items-center gap-2 bg-white/95 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-slate-200 shadow-xs">
           {detectedOverlaps.length === 0 ? (
-            <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5" /> 0 Simultaneous Overlaps
+            <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-bold">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 0 Overlaps Detected
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 text-rose-400 text-xs font-bold">
-              <AlertTriangle className="w-3.5 h-3.5" /> {detectedOverlaps.length} Overlapping Bookings
+            <div className="flex items-center gap-1.5 text-rose-700 text-xs font-bold">
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-600" /> {detectedOverlaps.length} Overlapping Sessions
             </div>
           )}
         </div>
@@ -1118,22 +1080,22 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
         )}
 
         {/* Legend */}
-        <div className="mt-3 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
+        <div className="mt-3 pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-blue-600 inline-block" /> Lecture Session
+              <span className="w-3 h-3 rounded bg-white border-2 border-blue-600 inline-block" /> Lecture Session
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-indigo-600 inline-block" /> Laboratory Practical
+              <span className="w-3 h-3 rounded bg-slate-50 border-2 border-indigo-600 inline-block" /> Laboratory Practical
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-rose-600 border border-rose-400 inline-block animate-pulse" /> Double-Booked / Conflict
+              <span className="w-3 h-3 rounded bg-rose-50 border-2 border-rose-600 inline-block" /> Overlapping / Collision
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-amber-500/20 border border-amber-500/30 inline-block" /> Recess Hour
+              <span className="w-3 h-3 rounded bg-amber-100 border border-amber-300 inline-block" /> Recess Hour
             </span>
           </div>
-          <span className="text-slate-500 italic">
+          <span className="text-slate-400">
             Click any session or clash marker to inspect & reschedule
           </span>
         </div>
@@ -1141,24 +1103,24 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
 
       {/* Selected Collision & Session Inspector */}
       {selectedEntry && (
-        <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 to-indigo-950/30 border border-indigo-900/40 shadow-xl space-y-3">
+        <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800 border border-slate-200">
                   {selectedEntry.sessionType.toUpperCase()}
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-500">
                   {selectedEntry.day} • {selectedEntry.startTime} - {selectedEntry.endTime}
                 </span>
               </div>
-              <h4 className="text-base font-bold text-white flex items-center gap-2">
+              <h4 className="text-base font-bold text-slate-900">
                 {selectedEntry.subjectName}
               </h4>
-              <p className="text-xs text-slate-300 mt-1">
-                Batch: <span className="text-white font-medium">{selectedEntry.batchName}</span> •
-                Faculty: <span className="text-white font-medium">{selectedEntry.facultyName}</span> •
-                Room: <span className="text-white font-medium">{selectedEntry.roomName}</span>
+              <p className="text-xs text-slate-600 mt-1">
+                Batch: <span className="text-slate-900 font-semibold">{selectedEntry.batchName}</span> •
+                Faculty: <span className="text-slate-900 font-semibold">{selectedEntry.facultyName}</span> •
+                Room: <span className="text-slate-900 font-semibold">{selectedEntry.roomName}</span>
               </p>
             </div>
 
@@ -1166,14 +1128,14 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
               {onEditEntry && (
                 <button
                   onClick={() => onEditEntry(selectedEntry)}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-md shadow-indigo-600/30"
+                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
                 >
                   <ExternalLink className="w-3.5 h-3.5" /> Edit Session
                 </button>
               )}
               <button
                 onClick={() => setSelectedEntryId(null)}
-                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs cursor-pointer"
+                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 text-xs cursor-pointer"
               >
                 Dismiss
               </button>
@@ -1182,28 +1144,28 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
 
           {/* Active collision detail cards for this session */}
           {selectedEntryCollisions.length > 0 ? (
-            <div className="space-y-2 pt-2 border-t border-slate-800">
-              <h5 className="text-xs font-bold text-rose-400 flex items-center gap-1.5">
+            <div className="space-y-2 pt-2 border-t border-slate-200">
+              <h5 className="text-xs font-bold text-rose-700 flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5" />
                 Detected Overlap Violations ({selectedEntryCollisions.length})
               </h5>
               {selectedEntryCollisions.map((coll, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl bg-rose-950/40 border border-rose-900/60 flex items-start justify-between gap-3 text-xs"
+                  className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-start justify-between gap-3 text-xs"
                 >
                   <div>
-                    <span className="font-bold text-rose-300 uppercase text-[10px] block mb-0.5">
+                    <span className="font-bold text-rose-800 uppercase text-[10px] block mb-0.5">
                       {coll.type.replace(/_/g, ' ')} ({coll.durationMinutes} min overlap)
                     </span>
-                    <p className="text-slate-200">{coll.description}</p>
+                    <p className="text-slate-800">{coll.description}</p>
                   </div>
                   <button
                     onClick={() => {
                       const other = coll.entryA.id === selectedEntry.id ? coll.entryB : coll.entryA;
                       setSelectedEntryId(other.id);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-rose-900/50 hover:bg-rose-900 text-rose-200 text-[11px] font-semibold shrink-0 cursor-pointer"
+                    className="px-2.5 py-1 rounded-md bg-white hover:bg-rose-100 text-rose-800 border border-rose-300 text-[11px] font-semibold shrink-0 cursor-pointer shadow-xs"
                   >
                     View Clashing Session
                   </button>
@@ -1211,8 +1173,8 @@ export const ConflictMap: React.FC<ConflictMapProps> = ({
               ))}
             </div>
           ) : (
-            <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-900/40 text-xs text-emerald-300 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>This session is verified and clean of direct room, faculty, or cohort collisions.</span>
             </div>
           )}

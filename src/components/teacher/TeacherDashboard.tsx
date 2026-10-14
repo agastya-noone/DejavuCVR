@@ -11,7 +11,6 @@ import { TimetableGrid } from '../common/TimetableGrid';
 import {
   Calendar,
   Clock,
-  MapPin,
   Users,
   AlertTriangle,
   CheckCircle,
@@ -19,8 +18,7 @@ import {
   Sparkles,
   Sliders,
   Save,
-  Check,
-  UserCheck
+  Check
 } from 'lucide-react';
 import { saveFacultyAvailability } from '../../lib/timetableService';
 
@@ -158,42 +156,40 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     }
   };
 
-  const teachingHours = facultyEntries.length; // Each slot is 1 hour
+  const teachingHours = facultyEntries.length;
   const maxHours = currentFaculty?.maxHoursPerWeek || 16;
   const loadPercentage = Math.min(100, Math.round((teachingHours / maxHours) * 100));
 
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-blue-950/40 to-slate-900 border border-blue-900/30 shadow-xl relative overflow-hidden">
-        <div className="absolute -top-12 -right-12 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                 Faculty Portal
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-500">
                 {currentFaculty?.department || 'Department'} • {currentFaculty?.designation}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               {currentFaculty ? currentFaculty.name : 'Faculty Dashboard'}
             </h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Personalized weekly teaching assignments, workload tracking, and availability controls.
+            <p className="text-sm text-slate-500 mt-1">
+              Teaching schedule assignments, weekly workload, and office hours availability.
             </p>
           </div>
 
-          {/* Faculty Selector (for demo evaluation) */}
+          {/* Faculty Selector */}
           {facultyList.length > 0 && onSelectFaculty && (
-            <div className="flex items-center gap-2 bg-slate-950/80 p-2 rounded-2xl border border-slate-800">
-              <span className="text-xs text-slate-400 pl-2">Faculty:</span>
+            <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+              <span className="text-xs text-slate-600 pl-1 font-medium">Instructor:</span>
               <select
                 value={currentFacultyId}
                 onChange={(e) => onSelectFaculty(e.target.value)}
-                className="bg-slate-900 text-xs text-slate-200 font-semibold px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-blue-500"
+                className="bg-white text-xs text-slate-900 font-semibold px-2.5 py-1.5 rounded-md border border-slate-300 focus:outline-none focus:border-blue-600 shadow-xs"
               >
                 {facultyList.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -208,13 +204,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
       {/* Conflict Alert Banner if any */}
       {facultyConflicts.length > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <h4 className="text-sm font-bold text-amber-200">
-              Schedule Warning ({facultyConflicts.length})
+            <h4 className="text-sm font-bold text-amber-900">
+              Schedule Warnings ({facultyConflicts.length})
             </h4>
-            <ul className="text-xs text-amber-300/90 list-disc list-inside space-y-0.5">
+            <ul className="text-xs text-amber-800 list-disc list-inside space-y-0.5">
               {facultyConflicts.map((c, i) => (
                 <li key={i}>{c}</li>
               ))}
@@ -226,90 +222,90 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Weekly Sessions */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
+        <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs mb-1.5">
             <span>Weekly Sessions</span>
-            <Clock className="w-4 h-4 text-blue-400" />
+            <Clock className="w-4 h-4 text-blue-600" />
           </div>
-          <div className="text-2xl font-extrabold text-white">{facultyEntries.length}</div>
-          <p className="text-[11px] text-slate-500 mt-1">Teaching hours assigned</p>
+          <div className="text-2xl font-bold text-slate-900">{facultyEntries.length}</div>
+          <p className="text-[11px] text-slate-400 mt-1">Teaching hours assigned</p>
         </div>
 
         {/* Workload Meter */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
+        <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs mb-1.5">
             <span>Teaching Capacity</span>
-            <span className="text-[11px] font-mono text-slate-300">
+            <span className="text-[11px] font-mono text-slate-700 font-medium">
               {teachingHours} / {maxHours} hrs
             </span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-2 mb-2">
+          <div className="w-full bg-slate-100 rounded-full h-2 mb-2 border border-slate-200">
             <div
               className={`h-2 rounded-full transition-all ${
-                loadPercentage > 90 ? 'bg-rose-500' : 'bg-blue-500'
+                loadPercentage > 90 ? 'bg-rose-600' : 'bg-blue-600'
               }`}
               style={{ width: `${loadPercentage}%` }}
             />
           </div>
-          <p className="text-[11px] text-slate-500">{loadPercentage}% of maximum target</p>
+          <p className="text-[11px] text-slate-400">{loadPercentage}% of target</p>
         </div>
 
         {/* Batches Handled */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Batches Handled</span>
-            <Users className="w-4 h-4 text-indigo-400" />
+        <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs mb-1.5">
+            <span>Cohorts Handled</span>
+            <Users className="w-4 h-4 text-indigo-600" />
           </div>
-          <div className="text-2xl font-extrabold text-white">
+          <div className="text-2xl font-bold text-slate-900">
             {new Set(facultyEntries.map((e) => e.batchId)).size}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Unique student cohorts</p>
+          <p className="text-[11px] text-slate-400 mt-1">Student cohorts</p>
         </div>
 
         {/* Conflicts Status */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Conflict State</span>
+        <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs mb-1.5">
+            <span>Audit Status</span>
             {facultyConflicts.length === 0 ? (
-              <CheckCircle className="w-4 h-4 text-emerald-400" />
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
             ) : (
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
             )}
           </div>
           <div
             className={`text-lg font-bold ${
-              facultyConflicts.length === 0 ? 'text-emerald-400' : 'text-amber-400'
+              facultyConflicts.length === 0 ? 'text-emerald-700' : 'text-amber-800'
             }`}
           >
             {facultyConflicts.length === 0 ? 'Zero Conflicts' : `${facultyConflicts.length} Notices`}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Institutional timetable audit</p>
+          <p className="text-[11px] text-slate-400 mt-1">Institutional verification</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+      <div className="flex items-center gap-1 border-b border-slate-200 pb-2">
         <button
           onClick={() => setActiveTab('schedule')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'schedule'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
           <Calendar className="w-3.5 h-3.5" />
-          Weekly Teaching Timetable
+          Teaching Timetable
         </button>
         <button
           onClick={() => setActiveTab('availability')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'availability'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
           <Sliders className="w-3.5 h-3.5" />
-          Faculty Availability & Office Hours
+          Office Hours & Availability
         </button>
       </div>
 
@@ -317,26 +313,26 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       {activeTab === 'schedule' && (
         <div className="space-y-6">
           {/* Today's Teaching Highlights */}
-          <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs text-blue-400 font-semibold">
+          <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-blue-700 font-semibold">
                 <Sparkles className="w-3.5 h-3.5" />
                 Today's Teaching Schedule ({todayName})
               </div>
-              <p className="text-sm text-slate-200">
-                You have <span className="font-bold text-white">{todayClasses.length} lectures/labs</span>{' '}
+              <p className="text-sm text-slate-800">
+                You have <span className="font-bold text-slate-900">{todayClasses.length} sessions</span>{' '}
                 scheduled for today.
               </p>
             </div>
 
             {upcomingLecture && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs">
+              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 border border-slate-200 shadow-xs">
+                <div className="w-7 h-7 rounded-md bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
                   Next
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white">{upcomingLecture.subjectName}</h4>
-                  <p className="text-[11px] text-slate-400">
+                  <h4 className="text-xs font-bold text-slate-900">{upcomingLecture.subjectName}</h4>
+                  <p className="text-[11px] text-slate-500">
                     {upcomingLecture.startTime} - {upcomingLecture.endTime} • {upcomingLecture.roomName} (
                     {upcomingLecture.batchName})
                   </p>
@@ -347,9 +343,9 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
           {/* Timetable Grid */}
           {facultyEntries.length === 0 ? (
-            <div className="p-12 text-center rounded-3xl bg-slate-900/40 border border-dashed border-slate-800 text-slate-400 space-y-3">
-              <CalendarCheck className="w-10 h-10 mx-auto text-blue-400/60" />
-              <h3 className="text-base font-bold text-white">No Teaching Sessions Assigned</h3>
+            <div className="p-12 text-center rounded-2xl bg-white border border-dashed border-slate-300 text-slate-500 space-y-3">
+              <CalendarCheck className="w-10 h-10 mx-auto text-slate-400" />
+              <h3 className="text-base font-bold text-slate-900">No Teaching Sessions Assigned</h3>
               <p className="text-xs max-w-md mx-auto">
                 No active timetable entries are mapped to your faculty profile ({currentFaculty?.name}).
               </p>
@@ -366,24 +362,23 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
       {/* Tab 2: Availability Editor */}
       {activeTab === 'availability' && (
-        <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
             <div>
-              <h3 className="text-lg font-bold text-white">Weekly Availability Matrix</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Click time slots to toggle your availability. Red slots represent periods reserved for research,
-                thesis mentoring, or administrative meetings. The automated scheduler will avoid these slots.
+              <h3 className="text-base font-bold text-slate-900">Weekly Availability Matrix</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Click time slots to toggle your availability. Marked busy slots will be strictly respected by the automated scheduler.
               </p>
             </div>
 
             <button
               onClick={handleSaveAvailability}
               disabled={savingAvailability}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 disabled:opacity-50 transition-all self-start sm:self-center"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition-all self-start sm:self-center cursor-pointer"
             >
               {saveSuccess ? (
                 <>
-                  <Check className="w-4 h-4 text-emerald-300" /> Saved to Firestore!
+                  <Check className="w-4 h-4 text-emerald-400" /> Saved!
                 </>
               ) : (
                 <>
@@ -394,19 +389,19 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
             {DAYS_OF_WEEK.map((day) => {
               const unavail = localUnavailableSlots[day] || [];
 
               return (
                 <div
                   key={day}
-                  className="rounded-2xl border border-slate-800 bg-slate-950/70 p-3 space-y-2.5"
+                  className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 space-y-2"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <span className="text-xs font-bold text-slate-200">{day}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      {TIME_SLOTS.length - unavail.length} free
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <span className="text-xs font-bold text-slate-800">{day}</span>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      {TIME_SLOTS.length - unavail.length} open
                     </span>
                   </div>
 
@@ -417,18 +412,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                         <button
                           key={slot.label}
                           onClick={() => handleToggleSlot(day, slot.label)}
-                          className={`w-full p-2 rounded-xl text-left text-xs font-medium transition-all flex items-center justify-between border ${
+                          className={`w-full p-2 rounded-lg text-left text-xs font-medium transition-all flex items-center justify-between border cursor-pointer ${
                             isUnavailable
-                              ? 'bg-rose-950/30 border-rose-800/40 text-rose-300 hover:bg-rose-900/40'
-                              : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:border-blue-500/40 hover:bg-slate-850'
+                              ? 'bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100'
+                              : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 shadow-xs'
                           }`}
                         >
                           <span className="text-[11px] font-mono">{slot.label}</span>
                           <span
                             className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
                               isUnavailable
-                                ? 'bg-rose-500/20 text-rose-300'
-                                : 'bg-emerald-500/20 text-emerald-300'
+                                ? 'bg-rose-200 text-rose-900'
+                                : 'bg-emerald-100 text-emerald-800'
                             }`}
                           >
                             {isUnavailable ? 'BUSY' : 'OPEN'}
