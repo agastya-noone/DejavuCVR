@@ -1,10 +1,30 @@
-export type UserRole = 'student' | 'teacher' | 'admin';
+export type UserRole =
+  | 'student'
+  | 'teacher'
+  | 'faculty'
+  | 'admin'
+  | 'STUDENT'
+  | 'FACULTY'
+  | 'ADMIN'
+  | 'TEACHER';
+
+export function normalizeRole(role?: string | null): 'admin' | 'faculty' | 'student' {
+  if (!role) return 'student';
+  const lower = role.toLowerCase();
+  if (lower === 'admin') return 'admin';
+  if (lower === 'faculty' || lower === 'teacher') return 'faculty';
+  return 'student';
+}
 
 export interface UserProfile {
   id: string;
+  uid?: string;
   email: string;
+  name?: string;
   displayName: string;
   role: UserRole;
+  active?: boolean;
+  department?: string;
   batchId?: string;
   facultyId?: string;
   createdAt?: string;

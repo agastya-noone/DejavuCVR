@@ -1,88 +1,112 @@
 import React, { useState } from 'react';
-import { useAuth, BOOTSTRAP_ADMIN_EMAIL } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   Calendar,
-  Shield,
-  GraduationCap,
-  UserCheck,
-  CheckCircle2,
   Lock,
-  ArrowRight,
   Mail,
   KeyRound,
-  UserPlus,
   LogIn,
   AlertCircle,
-  WifiOff
+  CheckCircle2,
+  WifiOff,
+  Shield,
+  UserCheck,
+  GraduationCap,
+  Sparkles,
+  ChevronDown,
+  ArrowRight,
+  Eye,
+  EyeOff
 } from 'lucide-react';
+import { DEMO_ACCOUNTS, DEFAULT_DEMO_PASSWORD, DemoAccountDef } from '../../lib/demoAccounts';
 
 export const LoginView: React.FC = () => {
-  const {
-    loginWithGoogle,
-    loginWithEmail,
-    registerWithEmail,
-    setDemoPersona,
-    isFirebaseConnected
-  } = useAuth();
+  const { loginWithEmail, registerWithEmail, isFirebaseConnected } = useAuth();
 
-  const [authMode, setAuthMode] = useState<'google' | 'email_login' | 'email_register'>('google');
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+  const [demoFilter, setDemoFilter] = useState<'ALL' | 'admin' | 'faculty' | 'student'>('ALL');
+  const [isDemoHelperOpen, setIsDemoHelperOpen] = useState(true);
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
+  const handleSelectDemoAccount = (account: DemoAccountDef) => {
+    setEmail(account.email);
+    setPassword(DEFAULT_DEMO_PASSWORD);
+    setAuthMode('login');
     setAuthError(null);
-    try {
-      await loginWithGoogle();
-    } catch (err: any) {
-      console.error('Google login error:', err);
-      setAuthError(err?.message || 'Failed to sign in with Google. Please check browser popups.');
-    } finally {
-      setLoading(false);
-    }
+    setAuthSuccess(`Selected demo account: ${account.email} (${account.displayName})`);
   };
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setAuthError(null);
     setAuthSuccess(null);
 
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      setAuthError('Please enter a valid email address.');
+      setLoading(false);
+      return;
+    }
+    if (!password) {
+      setAuthError('Please enter your password.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      if (authMode === 'email_login') {
-        await loginWithEmail(email, password);
-      } else if (authMode === 'email_register') {
-        await registerWithEmail(email, password, displayName);
-        setAuthSuccess('Account registered successfully! Accessing campus portal...');
+      if (authMode === 'login') {
+        const profile = await loginWithEmail(cleanEmail, password);
+        setAuthSuccess(`Signed in successfully as ${profile.displayName} (${profile.role.toUpperCase()})`);
+      } else {
+        await registerWithEmail(cleanEmail, password, displayName);
+        setAuthSuccess('Account registered successfully! Accessing student portal...');
       }
     } catch (err: any) {
-      console.error('Email auth error:', err);
+      console.error('Authentication Error:', err);
       const code = err?.code || '';
-      if (code === 'auth/operation-not-allowed') {
+      const msg = err?.message || '';
+
+      if (
+        code === 'auth/wrong-password' ||
+        code === 'auth/invalid-credential' ||
+        code === 'auth/invalid-login-credentials'
+      ) {
+        setAuthError('Invalid email or password. Please verify your credentials.');
+      } else if (code === 'auth/user-not-found') {
+        setAuthError('Account not found for this email. Please check your spelling or register a new student account.');
+      } else if (code === 'auth/email-already-in-use') {
+        setAuthError('This email is already registered. Please sign in instead.');
+      } else if (code === 'auth/weak-password') {
+        setAuthError('Password must be at least 6 characters.');
+      } else if (code === 'auth/invalid-email') {
+        setAuthError('Please enter a valid email address format.');
+      } else if (code === 'auth/operation-not-allowed') {
         setAuthError(
           'Email/Password provider is not yet enabled in your Firebase Console. Go to Firebase Console -> Authentication -> Sign-in method -> Email/Password and enable it.'
         );
-      } else if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
-        setAuthError('Invalid email or password. Please verify your credentials.');
-      } else if (code === 'auth/email-already-in-use') {
-        setAuthError('This email is already registered. Please switch to the Sign In tab.');
-      } else if (code === 'auth/weak-password') {
-        setAuthError('Password must be at least 6 characters.');
       } else {
-        setAuthError(err?.message || 'Authentication error. Please check credentials.');
+        setAuthError(msg || 'Authentication failure. Please check your credentials or network connection.');
       }
     } finally {
       setLoading(false);
     }
   };
 
+  const filteredDemoAccounts = DEMO_ACCOUNTS.filter((acc) => {
+    if (demoFilter === 'ALL') return true;
+    return acc.role === demoFilter;
+  });
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between">
-      {/* Header Bar */}
+      {/* Top Header Bar */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -91,26 +115,26 @@ export const LoginView: React.FC = () => {
             </div>
             <div>
               <span className="text-lg font-bold tracking-tight text-slate-900">
-                SYNCHRONIQ
+                CampusSolve
               </span>
               <span className="ml-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider hidden sm:inline">
-                Academic Administration
+                Academic Administration & Timetables
               </span>
             </div>
           </div>
 
-          {/* Connection Status Pill */}
+          {/* Connection Status Indicator */}
           <div className="flex items-center gap-2 text-xs">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-slate-700">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-50 border border-slate-200 text-slate-700">
               {isFirebaseConnected ? (
                 <>
                   <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                  <span className="text-slate-700 font-medium">Cloud Firestore Active</span>
+                  <span className="text-slate-700 font-medium text-xs">Firestore Connected</span>
                 </>
               ) : (
                 <>
                   <WifiOff className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="text-amber-700">Connecting Database</span>
+                  <span className="text-amber-700 text-xs">Connecting Database...</span>
                 </>
               )}
             </div>
@@ -118,175 +142,134 @@ export const LoginView: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-6xl mx-auto w-full px-6 py-12 flex flex-col lg:flex-row items-center gap-12 my-auto">
-        {/* Left Side: Product Value & Institutional Pillars */}
-        <div className="flex-1 space-y-6 text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-800 border border-slate-200 text-xs font-semibold">
-            Institutional Timetable Scheduling Platform
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Automated Academic Scheduling. <br />
-            <span className="text-blue-700">
-              Constraint-Verified & Conflict-Free.
-            </span>
-          </h1>
-
-          <p className="text-sm text-slate-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-            SYNCHRONIQ provides automated timetable generation with strict constraint validation,
-            preventing room, faculty, and student cohort double-bookings with live Cloud Firestore synchronization.
-          </p>
-
-          {/* Pillars List */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-left">
-            <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div className="text-xs">
-                <span className="font-bold text-slate-900 block">Conflict Prevention:</span>
-                <p className="text-slate-600">Strict non-overlap checks for instructors, classrooms, and batches.</p>
+      {/* Main Body */}
+      <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-10 my-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Institutional Value & Role Information */}
+          <div className="lg:col-span-5 space-y-6 text-left">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold mb-3">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                Firebase-Backed Academic Scheduling
               </div>
-            </div>
-            <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs">
-              <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-              <div className="text-xs">
-                <span className="font-bold text-slate-900 block">Laboratory Facility Mapping:</span>
-                <p className="text-slate-600">Practical modules automatically mapped to laboratory facilities.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs">
-              <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-              <div className="text-xs">
-                <span className="font-bold text-slate-900 block">Room Capacity Verification:</span>
-                <p className="text-slate-600">Enforces seating thresholds to prevent overcrowding.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs">
-              <CheckCircle2 className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
-              <div className="text-xs">
-                <span className="font-bold text-slate-900 block">Role-Based Security:</span>
-                <p className="text-slate-600">Audited access for Administrators, Faculty, and Students.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side: Authentication Card */}
-        <div className="w-full max-w-md">
-          <div className="p-7 rounded-2xl bg-white border border-slate-200 shadow-sm relative">
-            <div className="text-center mb-5">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center mx-auto mb-2 border border-slate-200">
-                <Lock className="w-5 h-5 text-slate-700" />
-              </div>
-              <h2 className="text-lg font-bold text-slate-900">Portal Authentication</h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Sign in with institutional credentials or authorized evaluator account
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                CampusSolve Portal <br />
+                <span className="text-blue-700">Strict Role-Based Access</span>
+              </h1>
+              <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                Automated conflict-free course timetabling and facility management. Authenticated with Firebase Email &amp; Password and role validation.
               </p>
             </div>
 
-            {/* Error & Success Messages */}
-            {authError && (
-              <div className="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
-                <span className="leading-tight">{authError}</span>
-              </div>
-            )}
-
-            {authSuccess && (
-              <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
-                <span className="leading-tight">{authSuccess}</span>
-              </div>
-            )}
-
-            {/* Auth Method Navigation Tabs */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 mb-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthMode('google');
-                  setAuthError(null);
-                }}
-                className={`flex-1 py-1.5 text-xs rounded-md font-semibold transition-all cursor-pointer ${
-                  authMode === 'google'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Google Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthMode('email_login');
-                  setAuthError(null);
-                }}
-                className={`flex-1 py-1.5 text-xs rounded-md font-semibold transition-all cursor-pointer ${
-                  authMode === 'email_login'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Email
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthMode('email_register');
-                  setAuthError(null);
-                }}
-                className={`flex-1 py-1.5 text-xs rounded-md font-semibold transition-all cursor-pointer ${
-                  authMode === 'email_register'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Register
-              </button>
-            </div>
-
-            {/* Tab 1: Google Sign In */}
-            {authMode === 'google' && (
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                  className="w-full py-2.5 px-4 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                  {loading ? 'Signing in with Google...' : 'Sign in with Google'}
-                </button>
-
-                <div className="text-center pt-1">
-                  <span className="text-[11px] text-slate-500">
-                    Administrator email: <span className="text-slate-800 font-mono font-medium">{BOOTSTRAP_ADMIN_EMAIL}</span>
-                  </span>
+            {/* Role Pillars */}
+            <div className="space-y-2.5">
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center shrink-0">
+                  <Shield className="w-4 h-4 text-slate-800" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Administrator Role (ADMIN)</h4>
+                  <p className="text-[11px] text-slate-600 mt-0.5">
+                    Generate automated schedules, orchestrate faculty, manage rooms, validate constraints, and publish institutional timetables.
+                  </p>
                 </div>
               </div>
-            )}
 
-            {/* Tab 2 & 3: Email / Password Auth Form */}
-            {(authMode === 'email_login' || authMode === 'email_register') && (
-              <form onSubmit={handleEmailAuth} className="space-y-3">
-                {authMode === 'email_register' && (
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                  <UserCheck className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Faculty Role (FACULTY)</h4>
+                  <p className="text-[11px] text-slate-600 mt-0.5">
+                    View assigned teaching sessions, classroom allocations, verify workload hours, and configure weekly time availability.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <GraduationCap className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Student Role (STUDENT)</h4>
+                  <p className="text-[11px] text-slate-600 mt-0.5">
+                    Read-only access to cohort-specific timetables, lecture halls, laboratory locations, and export/print schedules.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Authentication Card & Demo Credentials Helper */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Primary Login Card */}
+            <div className="p-7 rounded-2xl bg-white border border-slate-200 shadow-sm relative">
+              <div className="text-center mb-5">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center mx-auto mb-2 border border-slate-200">
+                  <Lock className="w-5 h-5 text-slate-700" />
+                </div>
+                <h2 className="text-lg font-bold text-slate-900">
+                  {authMode === 'login' ? 'Institutional Sign In' : 'Register Student Account'}
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Sign in with Firebase Email &amp; Password credentials
+                </p>
+              </div>
+
+              {/* Mode Switcher Tabs */}
+              <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 mb-5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('login');
+                    setAuthError(null);
+                    setAuthSuccess(null);
+                  }}
+                  className={`flex-1 py-1.5 text-xs rounded-md font-semibold transition-all cursor-pointer ${
+                    authMode === 'login'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('register');
+                    setAuthError(null);
+                    setAuthSuccess(null);
+                  }}
+                  className={`flex-1 py-1.5 text-xs rounded-md font-semibold transition-all cursor-pointer ${
+                    authMode === 'register'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Register Student
+                </button>
+              </div>
+
+              {/* Error Message Alert */}
+              {authError && (
+                <div className="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2 animate-fadeIn">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                  <span className="leading-relaxed">{authError}</span>
+                </div>
+              )}
+
+              {/* Success Message Alert */}
+              {authSuccess && (
+                <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2 animate-fadeIn">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+                  <span className="leading-relaxed">{authSuccess}</span>
+                </div>
+              )}
+
+              {/* Form */}
+              <form onSubmit={handleAuthSubmit} className="space-y-4">
+                {authMode === 'register' && (
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
                       Full Name *
@@ -297,7 +280,7 @@ export const LoginView: React.FC = () => {
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       placeholder="e.g. Jordan Smith"
-                      className="w-full bg-white text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
+                      className="w-full bg-white text-xs text-slate-900 px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
                     />
                   </div>
                 )}
@@ -307,14 +290,14 @@ export const LoginView: React.FC = () => {
                     Email Address *
                   </label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@campus.edu"
-                      className="w-full bg-white text-xs text-slate-900 pl-9 pr-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
+                      placeholder="admin@campussolve.demo, faculty1@..., or student1@..."
+                      className="w-full bg-white text-xs text-slate-900 pl-10 pr-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
                     />
                   </div>
                 </div>
@@ -324,109 +307,175 @@ export const LoginView: React.FC = () => {
                     Password *
                   </label>
                   <div className="relative">
-                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       required
                       minLength={6}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-white text-xs text-slate-900 pl-9 pr-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs font-mono"
+                      className="w-full bg-white text-xs text-slate-900 pl-10 pr-10 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs font-mono"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-1"
+                  className="w-full py-2.5 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
                 >
-                  {authMode === 'email_login' ? (
-                    <>
-                      <LogIn className="w-3.5 h-3.5" />
-                      {loading ? 'Signing In...' : 'Sign In with Email'}
-                    </>
+                  <LogIn className="w-4 h-4" />
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Authenticating...
+                    </span>
+                  ) : authMode === 'login' ? (
+                    'Sign In with Email'
                   ) : (
-                    <>
-                      <UserPlus className="w-3.5 h-3.5" />
-                      {loading ? 'Creating Account...' : 'Register Student Account'}
-                    </>
+                    'Create Student Account'
                   )}
                 </button>
               </form>
-            )}
-
-            {/* Divider */}
-            <div className="relative my-5">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase">
-                <span className="bg-white px-2.5 text-slate-500 font-semibold tracking-wider">
-                  Quick Access
-                </span>
-              </div>
             </div>
 
-            {/* Quick Demo Access for Hackathon Judges */}
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                className="w-full p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center justify-between transition-all group cursor-pointer shadow-xs"
+            {/* Development / Hackathon Demo Account Helper */}
+            <div className="rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden">
+              <div
+                onClick={() => setIsDemoHelperOpen((prev) => !prev)}
+                className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between cursor-pointer select-none hover:bg-slate-100/70 transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-md bg-slate-200 text-slate-800">
-                    <Shield className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
-                      Sign In as Administrator (Google)
-                    </h4>
-                    <p className="text-[10px] text-slate-500">Authorized administrative access</p>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-amber-100 text-amber-800 border border-amber-200">
+                    Development &amp; Demo Helper
+                  </span>
+                  <span className="text-xs font-semibold text-slate-800">
+                    21 Preconfigured Campus Accounts
+                  </span>
                 </div>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
+                    isDemoHelperOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </div>
 
-              <button
-                type="button"
-                onClick={() => setDemoPersona('teacher', undefined, 'fac_demo_vance', 'Dr. Evelyn Vance [Demo]')}
-                className="w-full p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center justify-between transition-all group cursor-pointer shadow-xs"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-md bg-blue-100 text-blue-700">
-                    <UserCheck className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
-                      Preview Faculty View (Dr. Evelyn Vance)
-                    </h4>
-                    <p className="text-[10px] text-slate-500">Assigned lectures & availability</p>
-                  </div>
-                </div>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all" />
-              </button>
+              {isDemoHelperOpen && (
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] text-slate-500">
+                      Click any account to automatically fill email &amp; demo password into the login form:
+                    </p>
 
-              <button
-                type="button"
-                onClick={() => setDemoPersona('student', 'batch_demo_alpha', undefined, 'Student [Batch Alpha]')}
-                className="w-full p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center justify-between transition-all group cursor-pointer shadow-xs"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-md bg-emerald-100 text-emerald-700">
-                    <GraduationCap className="w-3.5 h-3.5" />
+                    {/* Filter Pills */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setDemoFilter('ALL')}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer ${
+                          demoFilter === 'ALL'
+                            ? 'bg-slate-900 text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        All (21)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDemoFilter('admin')}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer ${
+                          demoFilter === 'admin'
+                            ? 'bg-slate-900 text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        Admin
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDemoFilter('faculty')}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer ${
+                          demoFilter === 'faculty'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        Faculty (10)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDemoFilter('student')}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer ${
+                          demoFilter === 'student'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        Students (10)
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
-                      Preview Student View (Batch Alpha)
-                    </h4>
-                    <p className="text-[10px] text-slate-500">Cohort timetable & daily sessions</p>
+
+                  {/* Account Grid / Scroll Area */}
+                  <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
+                    {filteredDemoAccounts.map((account) => {
+                      const isSelected = email === account.email;
+                      const roleBadge =
+                        account.role === 'admin' ? (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-800">
+                            ADMIN
+                          </span>
+                        ) : account.role === 'faculty' ? (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">
+                            FACULTY
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                            STUDENT
+                          </span>
+                        );
+
+                      return (
+                        <button
+                          key={account.email}
+                          type="button"
+                          onClick={() => handleSelectDemoAccount(account)}
+                          className={`w-full p-2.5 rounded-lg border text-left flex items-center justify-between gap-3 transition-all cursor-pointer text-xs ${
+                            isSelected
+                              ? 'bg-blue-50/70 border-blue-400 shadow-xs'
+                              : 'bg-white hover:bg-slate-50 border-slate-200'
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              {roleBadge}
+                              <span className="font-semibold text-slate-900 truncate">
+                                {account.email}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                              {account.displayName} • {account.description}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-600 shrink-0">
+                            <span>Fill</span>
+                            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all" />
-              </button>
+              )}
             </div>
           </div>
         </div>
@@ -434,7 +483,7 @@ export const LoginView: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
-        SYNCHRONIQ • Academic Timetable Management System
+        CampusSolve • Academic Timetable Management System
       </footer>
     </div>
   );

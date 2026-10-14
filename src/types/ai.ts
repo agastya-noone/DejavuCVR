@@ -1,4 +1,4 @@
-import { DayOfWeek, TimetableConflict, TimetableEntry } from './index';
+import { DayOfWeek, TimetableConflict, TimetableEntry, UserRole } from './index';
 
 export type AIIntent =
   | 'GENERAL_QUERY'
@@ -72,7 +72,7 @@ export interface AIMessage {
 export interface AIProcessRequest {
   message: string;
   history: { role: 'user' | 'assistant'; content: string }[];
-  userRole: 'admin' | 'teacher' | 'student';
+  userRole: UserRole;
   userInfo: {
     id: string;
     email: string;

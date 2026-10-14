@@ -30,6 +30,7 @@ import {
   AVAILABILITY_COL,
   sanitizeForFirestore
 } from './timetableService';
+import { seedDemoUserProfilesInFirestore } from './demoAccounts';
 
 /**
  * ============================================================================
@@ -181,6 +182,28 @@ export const DEMO_FICTIONAL_FACULTY: (Faculty & { qualifications: string })[] = 
     maxHoursPerWeek: 14,
     color: '#0284c7', // Sky
     qualifications: 'Ph.D. in Distributed Web Systems & Microservices',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'fac_demo_chen',
+    name: 'Dr. Lin Chen [Fictional Demo]',
+    department: 'Artificial Intelligence & Robotics [Demo]',
+    email: 'faculty9@campussolve.demo',
+    designation: 'Associate Professor',
+    maxHoursPerWeek: 16,
+    color: '#14b8a6', // Teal
+    qualifications: 'Ph.D. in Autonomous Robotics & Perceptual AI',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'fac_demo_patel',
+    name: 'Prof. Rajesh Patel [Fictional Demo]',
+    department: 'Cyber-Physical Systems & IoT [Demo]',
+    email: 'faculty10@campussolve.demo',
+    designation: 'Professor',
+    maxHoursPerWeek: 14,
+    color: '#84cc16', // Lime
+    qualifications: 'Ph.D. in Sensor Networks & Real-Time Embedded Systems',
     createdAt: new Date().toISOString()
   }
 ];
@@ -551,7 +574,21 @@ export const DEMO_FICTIONAL_AVAILABILITY: FacultyAvailability[] = [
   { id: 'fac_demo_kapoor_Tuesday', facultyId: 'fac_demo_kapoor', day: 'Tuesday', availableSlots: [], unavailableSlots: ['14:00 - 15:00'] },
   { id: 'fac_demo_kapoor_Wednesday', facultyId: 'fac_demo_kapoor', day: 'Wednesday', availableSlots: [], unavailableSlots: [] },
   { id: 'fac_demo_kapoor_Thursday', facultyId: 'fac_demo_kapoor', day: 'Thursday', availableSlots: [], unavailableSlots: [] },
-  { id: 'fac_demo_kapoor_Friday', facultyId: 'fac_demo_kapoor', day: 'Friday', availableSlots: [], unavailableSlots: [] }
+  { id: 'fac_demo_kapoor_Friday', facultyId: 'fac_demo_kapoor', day: 'Friday', availableSlots: [], unavailableSlots: [] },
+
+  // 9. Dr. Lin Chen
+  { id: 'fac_demo_chen_Monday', facultyId: 'fac_demo_chen', day: 'Monday', availableSlots: [], unavailableSlots: [] },
+  { id: 'fac_demo_chen_Tuesday', facultyId: 'fac_demo_chen', day: 'Tuesday', availableSlots: [], unavailableSlots: [] },
+  { id: 'fac_demo_chen_Wednesday', facultyId: 'fac_demo_chen', day: 'Wednesday', availableSlots: [], unavailableSlots: ['11:15 - 12:15'] },
+  { id: 'fac_demo_chen_Thursday', facultyId: 'fac_demo_chen', day: 'Thursday', availableSlots: [], unavailableSlots: [] },
+  { id: 'fac_demo_chen_Friday', facultyId: 'fac_demo_chen', day: 'Friday', availableSlots: [], unavailableSlots: [] },
+
+  // 10. Prof. Rajesh Patel
+  { id: 'fac_demo_patel_Monday', facultyId: 'fac_demo_patel', day: 'Monday', availableSlots: [], unavailableSlots: [] },
+  { id: 'fac_demo_patel_Tuesday', facultyId: 'fac_demo_patel', day: 'Tuesday', availableSlots: [], unavailableSlots: [] },
+  { id: 'fac_demo_patel_Wednesday', facultyId: 'fac_demo_patel', day: 'Wednesday', availableSlots: [], unavailableSlots: [] },
+  { id: 'fac_demo_patel_Thursday', facultyId: 'fac_demo_patel', day: 'Thursday', availableSlots: [], unavailableSlots: ['15:00 - 16:00'] },
+  { id: 'fac_demo_patel_Friday', facultyId: 'fac_demo_patel', day: 'Friday', availableSlots: [], unavailableSlots: [] }
 ];
 
 /**
@@ -1865,7 +1902,12 @@ export async function loadFictionalDemoData(forceOverwrite: boolean = false): Pr
 
     await batch.commit();
 
-    // 3. Immediately run full multi-constraint validation
+    // 3. Seed demo user profiles in Firestore
+    await seedDemoUserProfilesInFirestore().catch((err) => {
+      console.warn('Note: Could not batch write demo user profiles:', err);
+    });
+
+    // 4. Immediately run full multi-constraint validation
     const validationReport = validateFullSchedule(
       DEMO_FICTIONAL_TIMETABLE_ENTRIES,
       DEMO_FICTIONAL_FACULTY,

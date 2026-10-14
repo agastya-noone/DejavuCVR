@@ -87,7 +87,7 @@ export const CampusSolveAIAssistant: React.FC<CampusSolveAIAssistantProps> = ({
           'Show faculty workload distribution',
           'Run automated schedule generator'
         ];
-      } else if (role === 'teacher') {
+      } else if (role === 'teacher' || role === 'faculty') {
         welcomeContent = `👋 **Hello ${userInfo.displayName || 'Faculty Member'}!**\n\nI am your personal **CampusSolve Teaching Assistant**. I can help you monitor your weekly lecture hours, check upcoming classrooms, look up free periods, and answer questions about your assigned student cohorts.`;
         initialSuggestions = [
           'When is my next class?',
@@ -233,7 +233,7 @@ export const CampusSolveAIAssistant: React.FC<CampusSolveAIAssistantProps> = ({
             <p className="text-[11px] text-slate-300 truncate max-w-[220px] sm:max-w-[280px]">
               {role === 'admin'
                 ? 'Master Scheduling Intelligence'
-                : role === 'teacher'
+                : role === 'teacher' || role === 'faculty'
                 ? 'Faculty Workload & Timetable Assistant'
                 : 'Student Schedule Guide'}
             </p>

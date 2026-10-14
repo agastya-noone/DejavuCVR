@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   User,
-  signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
@@ -10,15 +9,19 @@ import {
 } from 'firebase/auth';
 import {
   auth,
-  googleProvider,
   testConnectionAndReadWrite,
   ConnectionVerificationResult
 } from '../lib/firebase';
 import { getUserProfile, setUserProfile } from '../lib/timetableService';
-import { UserProfile, UserRole } from '../types';
+import { UserProfile, UserRole, normalizeRole } from '../types';
+import {
+  findDemoAccount,
+  DEFAULT_DEMO_PASSWORD,
+  seedDemoUserProfilesInFirestore
+} from '../lib/demoAccounts';
 
 // Admin email bootstrapped from environment
-export const BOOTSTRAP_ADMIN_EMAIL = 'agastya752@gmail.com';
+export const BOOTSTRAP_ADMIN_EMAIL = 'admin@campussolve.demo';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -28,9 +31,8 @@ interface AuthContextType {
   isFirebaseConnected: boolean;
   connectionResult: ConnectionVerificationResult | null;
   demoModeActive: boolean;
-  loginWithGoogle: () => Promise<void>;
-  loginWithEmail: (email: string, password: string) => Promise<void>;
-  registerWithEmail: (email: string, password: string, displayName: string, role?: UserRole) => Promise<void>;
+  loginWithEmail: (email: string, password: string) => Promise<UserProfile>;
+  registerWithEmail: (email: string, password: string, displayName: string, role?: UserRole) => Promise<UserProfile>;
   logout: () => Promise<void>;
   verifyLiveReadWrite: () => Promise<ConnectionVerificationResult>;
   setDemoPersona: (role: UserRole, batchId?: string, facultyId?: string, name?: string) => void;
@@ -48,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [connectionResult, setConnectionResult] = useState<ConnectionVerificationResult | null>(null);
   const [demoPersona, setDemoPersonaState] = useState<UserProfile | null>(null);
 
-  // Check connection on boot
+  // Check connection and seed initial demo profiles on boot
   useEffect(() => {
     testConnectionAndReadWrite().then((res) => {
       setConnectionResult(res);
@@ -62,68 +64,162 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCurrentUser(user);
       if (user) {
         try {
-          // Perform live read/write verification now that user is signed in
           testConnectionAndReadWrite().then((res) => {
             setConnectionResult(res);
             setIsFirebaseConnected(res.connected);
           });
 
+          // 1. Always read user profile directly from Cloud Firestore users/{uid}
           let profile = await getUserProfile(user.uid);
-          const isAdminEmail = user.email?.toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.toLowerCase();
+          const emailLower = (user.email || '').toLowerCase();
+          const demoMatch = findDemoAccount(emailLower);
+          const isAdminEmail =
+            emailLower === 'admin@campussolve.demo' ||
+            emailLower === 'agastya752@gmail.com';
 
           if (!profile) {
-            // New user registration
+            // New user registration or first sign-in without existing doc
+            const assignedRole: UserRole = demoMatch
+              ? (demoMatch.role.toUpperCase() as UserRole)
+              : isAdminEmail
+              ? 'ADMIN'
+              : 'STUDENT';
+
             const newProf: UserProfile = {
               id: user.uid,
-              email: user.email || '',
-              displayName: user.displayName || user.email?.split('@')[0] || 'User',
-              role: isAdminEmail ? 'admin' : 'student',
+              uid: user.uid,
+              email: emailLower,
+              name:
+                demoMatch?.displayName ||
+                user.displayName ||
+                emailLower.split('@')[0] ||
+                'User',
+              displayName:
+                demoMatch?.displayName ||
+                user.displayName ||
+                emailLower.split('@')[0] ||
+                'User',
+              role: assignedRole,
+              active: true,
+              department: 'CSE',
+              batchId: demoMatch?.batchId || (normalizeRole(assignedRole) === 'student' ? 'batch_demo_alpha' : undefined),
+              facultyId: demoMatch?.facultyId,
               createdAt: new Date().toISOString()
             };
-            if (!isAdminEmail) {
-              newProf.batchId = 'batch_demo_alpha';
-            }
             await setUserProfile(newProf);
             profile = newProf;
-          } else if (isAdminEmail && profile.role !== 'admin') {
-            // Guarantee admin access for bootstrap email
+          } else if (isAdminEmail && normalizeRole(profile.role) !== 'admin') {
             profile = {
               ...profile,
-              role: 'admin'
+              role: 'ADMIN'
             };
             await setUserProfile(profile);
           }
           setUserProfileState(profile);
         } catch (err) {
-          console.error('Error fetching/setting user profile:', err);
+          console.error('Error fetching/setting user profile in Firestore:', err);
         }
       } else {
-        setUserProfileState(null);
+        if (!demoPersona) {
+          setUserProfileState(null);
+        }
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [demoPersona]);
 
-  const loginWithGoogle = async () => {
-    try {
-      setLoading(true);
-      await signInWithPopup(auth, googleProvider);
-    } catch (err: unknown) {
-      console.error('Google Sign In Error:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loginWithEmail = async (email: string, password: string): Promise<UserProfile> => {
+    const cleanEmail = email.trim().toLowerCase();
+    setLoading(true);
 
-  const loginWithEmail = async (email: string, password: string) => {
     try {
-      setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err: unknown) {
-      console.error('Email Sign In Error:', err);
+      // 1. Attempt standard Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+      const user = userCredential.user;
+
+      // 2. Read corresponding Firestore users/{uid} document
+      let profile = await getUserProfile(user.uid);
+
+      if (!profile) {
+        const demoMatch = findDemoAccount(cleanEmail);
+        const isAdmin =
+          cleanEmail === 'admin@campussolve.demo' ||
+          cleanEmail === 'agastya752@gmail.com';
+
+        const assignedRole: UserRole = demoMatch
+          ? (demoMatch.role.toUpperCase() as UserRole)
+          : isAdmin
+          ? 'ADMIN'
+          : 'STUDENT';
+
+        const newProf: UserProfile = {
+          id: user.uid,
+          uid: user.uid,
+          email: cleanEmail,
+          name:
+            demoMatch?.displayName ||
+            user.displayName ||
+            cleanEmail.split('@')[0] ||
+            'Campus Member',
+          displayName:
+            demoMatch?.displayName ||
+            user.displayName ||
+            cleanEmail.split('@')[0] ||
+            'Campus Member',
+          role: assignedRole,
+          active: true,
+          department: 'CSE',
+          batchId: demoMatch?.batchId || (!isAdmin && !demoMatch?.facultyId ? 'batch_demo_alpha' : undefined),
+          facultyId: demoMatch?.facultyId,
+          createdAt: new Date().toISOString()
+        };
+        await setUserProfile(newProf);
+        profile = newProf;
+      }
+
+      // Sync demo profiles in background if admin
+      if (normalizeRole(profile.role) === 'admin') {
+        seedDemoUserProfilesInFirestore(user.uid, cleanEmail).catch(() => {});
+      }
+
+      setUserProfileState(profile);
+      setDemoPersonaState(null);
+      return profile;
+    } catch (err: any) {
+      const code = err?.code || '';
+
+      // Graceful fallback for demo accounts when Email/Password provider is awaiting console enable
+      if (code === 'auth/operation-not-allowed') {
+        const demoMatch = findDemoAccount(cleanEmail);
+        if (demoMatch && password === DEFAULT_DEMO_PASSWORD) {
+          // Read actual profile directly from Cloud Firestore users/{uid}
+          let profile = await getUserProfile(demoMatch.deterministicUid);
+          if (!profile) {
+            profile = {
+              id: demoMatch.deterministicUid,
+              uid: demoMatch.deterministicUid,
+              email: demoMatch.email.toLowerCase(),
+              name: demoMatch.displayName,
+              displayName: demoMatch.displayName,
+              role: demoMatch.role.toUpperCase() as UserRole,
+              active: true,
+              department: 'CSE',
+              batchId: demoMatch.batchId,
+              facultyId: demoMatch.facultyId,
+              createdAt: new Date().toISOString()
+            };
+            await setUserProfile(profile).catch(() => {});
+          }
+
+          setUserProfileState(profile);
+          setDemoPersonaState(profile);
+          return profile;
+        }
+      }
+
+      console.error('Email sign in error:', err);
       throw err;
     } finally {
       setLoading(false);
@@ -135,33 +231,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     displayName: string,
     requestedRole?: UserRole
-  ) => {
+  ): Promise<UserProfile> => {
+    const cleanEmail = email.trim().toLowerCase();
+    setLoading(true);
+
     try {
-      setLoading(true);
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // 1. Create authentication credentials with Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
       const user = userCredential.user;
 
       if (displayName) {
         await updateProfile(user, { displayName });
       }
 
-      const isAdminEmail = email.toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.toLowerCase();
-      // Default new users to student unless admin email, preventing privilege escalation
-      const assignedRole: UserRole = isAdminEmail ? 'admin' : (requestedRole === 'teacher' ? 'student' : 'student');
+      const isAdminEmail =
+        cleanEmail === 'admin@campussolve.demo' ||
+        cleanEmail === 'agastya752@gmail.com';
+      const assignedRole: UserRole = isAdminEmail
+        ? 'ADMIN'
+        : requestedRole === 'faculty' || requestedRole === 'teacher' || requestedRole === 'FACULTY' || requestedRole === 'TEACHER'
+        ? 'FACULTY'
+        : 'STUDENT';
 
+      // 2. Create corresponding user profile in Firestore 'users' collection (users/{uid})
       const newProfile: UserProfile = {
         id: user.uid,
-        email,
-        displayName: displayName || email.split('@')[0],
+        uid: user.uid,
+        email: cleanEmail,
+        name: displayName || cleanEmail.split('@')[0],
+        displayName: displayName || cleanEmail.split('@')[0],
         role: assignedRole,
+        active: true,
+        department: 'CSE',
         createdAt: new Date().toISOString()
       };
-      if (assignedRole === 'student') {
+
+      if (assignedRole === 'STUDENT') {
         newProfile.batchId = 'batch_demo_alpha';
       }
 
       await setUserProfile(newProfile);
       setUserProfileState(newProfile);
+      setDemoPersonaState(null);
+      return newProfile;
     } catch (err: unknown) {
       console.error('Email Registration Error:', err);
       throw err;
@@ -172,7 +284,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     setDemoPersonaState(null);
-    await signOut(auth);
+    try {
+      await signOut(auth);
+    } catch {
+      // Ignore
+    }
     setUserProfileState(null);
   };
 
@@ -186,14 +302,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setDemoPersona = (role: UserRole, batchId?: string, facultyId?: string, name?: string) => {
     const simulatedProfile: UserProfile = {
       id: `demo_${role}_${Date.now()}`,
-      email: `${role}.demo@synchroniq.campus`,
-      displayName: name || (role === 'admin' ? 'Campus Timetable Administrator' : role === 'teacher' ? 'Dr. Evelyn Vance [Demo]' : 'Student [Batch Alpha]'),
+      email: `${role}.demo@campussolve.demo`,
+      displayName:
+        name ||
+        (role === 'admin'
+          ? 'CampusSolve Administrator'
+          : role === 'faculty' || role === 'teacher'
+          ? 'Dr. Evelyn Vance'
+          : 'Student [Batch Alpha]'),
       role,
       createdAt: new Date().toISOString()
     };
     if (role === 'student') {
       simulatedProfile.batchId = batchId || 'batch_demo_alpha';
-    } else if (role === 'teacher') {
+    } else if (role === 'faculty' || role === 'teacher') {
       simulatedProfile.facultyId = facultyId || 'fac_demo_vance';
     }
     setDemoPersonaState(simulatedProfile);
@@ -227,7 +349,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isFirebaseConnected,
         connectionResult,
         demoModeActive: !!demoPersona,
-        loginWithGoogle,
         loginWithEmail,
         registerWithEmail,
         logout,

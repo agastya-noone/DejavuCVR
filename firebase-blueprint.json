@@ -8,7 +8,7 @@
         "id": { "type": "string", "description": "Auth UID" },
         "email": { "type": "string", "description": "User email address" },
         "displayName": { "type": "string", "description": "Full display name" },
-        "role": { "type": "string", "enum": ["student", "teacher", "admin"], "description": "Authorized RBAC role" },
+        "role": { "type": "string", "enum": ["student", "teacher", "faculty", "admin"], "description": "Authorized RBAC role" },
         "batchId": { "type": "string", "description": "Associated batch ID for students" },
         "facultyId": { "type": "string", "description": "Associated faculty ID for teachers" },
         "createdAt": { "type": "string", "description": "Creation timestamp" },

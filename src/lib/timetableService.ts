@@ -265,7 +265,7 @@ export async function getTimetableEntries(userRole: UserRole, filterId?: string)
       q = collection(db, TIMETABLE_COL);
     } else if (userRole === 'student' && filterId) {
       q = query(collection(db, TIMETABLE_COL), where('batchId', '==', filterId));
-    } else if (userRole === 'teacher' && filterId) {
+    } else if ((userRole === 'teacher' || userRole === 'faculty') && filterId) {
       q = query(collection(db, TIMETABLE_COL), where('facultyId', '==', filterId));
     } else {
       q = collection(db, TIMETABLE_COL);

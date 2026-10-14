@@ -25,7 +25,8 @@ import {
   FacultyAvailability,
   Room,
   Subject,
-  TimetableEntry
+  TimetableEntry,
+  normalizeRole
 } from './types';
 import { Calendar, Loader2, Sparkles } from 'lucide-react';
 import { CampusSolveAIAssistant } from './components/common/CampusSolveAIAssistant';
@@ -36,7 +37,8 @@ import {
   DEMO_FICTIONAL_SUBJECTS,
   DEMO_FICTIONAL_ROOMS,
   DEMO_FICTIONAL_AVAILABILITY,
-  DEMO_FICTIONAL_TIMETABLE_ENTRIES
+  DEMO_FICTIONAL_TIMETABLE_ENTRIES,
+  loadFictionalDemoData
 } from './lib/demoData';
 
 function DashboardRouter() {
@@ -60,7 +62,8 @@ function DashboardRouter() {
   // Handle applying AI-generated automated schedule
   const handleApplyAISchedule = async (newEntries: TimetableEntry[]) => {
     setEntries(newEntries);
-    if (currentUser && !demoModeActive && role === 'admin') {
+    const normRole = normalizeRole(role);
+    if (currentUser && !demoModeActive && normRole === 'admin') {
       try {
         await Promise.all(newEntries.map((e) => saveTimetableEntry(e)));
       } catch (err) {
@@ -69,7 +72,7 @@ function DashboardRouter() {
     }
   };
 
-  // Load dataset from Firestore (or in-memory demo if evaluator is using preview mode without auth)
+  // Load dataset from Firestore
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
       setIsRefreshing(true);
@@ -78,34 +81,12 @@ function DashboardRouter() {
     }
 
     try {
-      // If Evaluator Preview Fast-Track is active without Firebase login, provide in-memory demo data
-      if (!currentUser && demoModeActive) {
-        setBatches(DEMO_FICTIONAL_BATCHES);
-        setFaculty(DEMO_FICTIONAL_FACULTY);
-        setSubjects(DEMO_FICTIONAL_SUBJECTS);
-        setRooms(DEMO_FICTIONAL_ROOMS);
-        setAvailabilities(DEMO_FICTIONAL_AVAILABILITY);
+      const normRole = normalizeRole(role);
 
-        const currentRole = role || 'student';
-        const filterId =
-          currentRole === 'student'
-            ? userProfile?.batchId || studentBatchId
-            : currentRole === 'teacher'
-            ? userProfile?.facultyId || teacherFacultyId
-            : undefined;
-
-        let filtered = DEMO_FICTIONAL_TIMETABLE_ENTRIES;
-        if (currentRole === 'student' && filterId) {
-          filtered = DEMO_FICTIONAL_TIMETABLE_ENTRIES.filter((e) => e.batchId === filterId);
-        } else if (currentRole === 'teacher' && filterId) {
-          filtered = DEMO_FICTIONAL_TIMETABLE_ENTRIES.filter((e) => e.facultyId === filterId);
-        }
-        setEntries(filtered);
-        return;
-      }
+      // Always fetch institutional dataset from Cloud Firestore
 
       // Load resources from Cloud Firestore
-      const [bList, fList, sList, rList, aList] = await Promise.all([
+      let [bList, fList, sList, rList, aList] = await Promise.all([
         getBatches().catch(() => []),
         getFaculty().catch(() => []),
         getSubjects().catch(() => []),
@@ -113,11 +94,28 @@ function DashboardRouter() {
         getFacultyAvailability().catch(() => [])
       ]);
 
-      setBatches(bList);
-      setFaculty(fList);
-      setSubjects(sList);
-      setRooms(rList);
-      setAvailabilities(aList);
+      // If Firestore database is initially empty, perform initial demo data migration
+      if (bList.length === 0 && fList.length === 0) {
+        try {
+          await loadFictionalDemoData();
+          [bList, fList, sList, rList, aList] = await Promise.all([
+            getBatches().catch(() => []),
+            getFaculty().catch(() => []),
+            getSubjects().catch(() => []),
+            getRooms().catch(() => []),
+            getFacultyAvailability().catch(() => [])
+          ]);
+        } catch (seedErr) {
+          console.warn('Initial Firestore seed attempt completed or skipped:', seedErr);
+        }
+      }
+
+      // Fallback to demo objects if Firestore returns empty set to guarantee interface stability
+      setBatches(bList.length > 0 ? bList : DEMO_FICTIONAL_BATCHES);
+      setFaculty(fList.length > 0 ? fList : DEMO_FICTIONAL_FACULTY);
+      setSubjects(sList.length > 0 ? sList : DEMO_FICTIONAL_SUBJECTS);
+      setRooms(rList.length > 0 ? rList : DEMO_FICTIONAL_ROOMS);
+      setAvailabilities(aList.length > 0 ? aList : DEMO_FICTIONAL_AVAILABILITY);
 
       if (bList.length > 0 && !bList.some((b) => b.id === studentBatchId)) {
         setStudentBatchId(bList[0].id);
@@ -127,16 +125,26 @@ function DashboardRouter() {
       }
 
       // Timetable entries query
-      const currentRole = role || 'student';
       const filterId =
-        currentRole === 'student'
+        normRole === 'student'
           ? userProfile?.batchId || studentBatchId
-          : currentRole === 'teacher'
+          : normRole === 'faculty'
           ? userProfile?.facultyId || teacherFacultyId
           : undefined;
 
-      const tEntries = await getTimetableEntries(currentRole, filterId).catch(() => []);
-      setEntries(tEntries);
+      const tEntries = await getTimetableEntries(normRole, filterId).catch(() => []);
+      if (tEntries.length > 0) {
+        setEntries(tEntries);
+      } else {
+        // Fallback filter on fictional entries if collection is empty
+        let fallbackEntries = DEMO_FICTIONAL_TIMETABLE_ENTRIES;
+        if (normRole === 'student' && filterId) {
+          fallbackEntries = DEMO_FICTIONAL_TIMETABLE_ENTRIES.filter((e) => e.batchId === filterId);
+        } else if (normRole === 'faculty' && filterId) {
+          fallbackEntries = DEMO_FICTIONAL_TIMETABLE_ENTRIES.filter((e) => e.facultyId === filterId);
+        }
+        setEntries(fallbackEntries);
+      }
     } catch (err) {
       console.error('Error fetching timetable dataset from Firestore:', err);
     } finally {
@@ -169,7 +177,7 @@ function DashboardRouter() {
           <Calendar className="w-6 h-6" />
         </div>
         <Loader2 className="w-6 h-6 text-blue-600 animate-spin mb-2" />
-        <p className="text-xs text-slate-500 font-medium">Loading SYNCHRONIQ...</p>
+        <p className="text-xs text-slate-500 font-medium">Loading CampusSolve...</p>
       </div>
     );
   }
@@ -178,6 +186,8 @@ function DashboardRouter() {
   if (!currentUser && !userProfile) {
     return <LoginView />;
   }
+
+  const normRole = normalizeRole(role);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
@@ -194,7 +204,7 @@ function DashboardRouter() {
             <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
             <p className="text-xs text-slate-500">Synchronizing timetable records from Cloud Firestore...</p>
           </div>
-        ) : role === 'admin' ? (
+        ) : normRole === 'admin' ? (
           <AdminDashboard
             entries={entries}
             batches={batches}
@@ -204,7 +214,7 @@ function DashboardRouter() {
             availabilities={availabilities}
             onRefreshData={() => loadData(true)}
           />
-        ) : role === 'teacher' ? (
+        ) : normRole === 'faculty' ? (
           <TeacherDashboard
             entries={entries}
             facultyList={faculty}
@@ -247,9 +257,9 @@ function DashboardRouter() {
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             </div>
             <span className="text-[10px] text-slate-300 group-hover:text-blue-100 font-medium">
-              {role === 'admin'
+              {normRole === 'admin'
                 ? 'Scheduling Co-Pilot'
-                : role === 'teacher'
+                : normRole === 'faculty'
                 ? 'Faculty Assistant'
                 : 'Student Guide'}
             </span>
@@ -261,13 +271,13 @@ function DashboardRouter() {
       <CampusSolveAIAssistant
         isOpen={isAIOpen}
         onClose={() => setIsAIOpen(false)}
-        role={role || 'student'}
+        role={normRole}
         userInfo={{
           id: userProfile?.id || currentUser?.uid || 'user_demo',
-          email: userProfile?.email || currentUser?.email || 'user@campus.edu',
+          email: userProfile?.email || currentUser?.email || 'user@campussolve.demo',
           displayName: userProfile?.displayName || currentUser?.displayName || 'Campus Member',
-          batchId: role === 'student' ? studentBatchId : undefined,
-          facultyId: role === 'teacher' ? teacherFacultyId : undefined
+          batchId: normRole === 'student' ? studentBatchId : undefined,
+          facultyId: normRole === 'faculty' ? teacherFacultyId : undefined
         }}
         dataset={{
           entries,
@@ -278,11 +288,12 @@ function DashboardRouter() {
           availabilities
         }}
         onApplyGeneratedSchedule={handleApplyAISchedule}
+        onTriggerPrintExport={() => window.print()}
       />
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500 no-print">
-        SYNCHRONIQ • Academic Timetable Management System
+        CampusSolve • Academic Timetable Management System
       </footer>
     </div>
   );
